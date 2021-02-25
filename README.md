@@ -1,6 +1,6 @@
 # Why is it necessary?
 
-It also reloads the `browser` upon change.
+Because it also reloads the `browser` upon change.
 
 # How does it work?
 
@@ -11,7 +11,7 @@ Plain: Watches for code changes, reloads the specified binary e.g. a webserver a
 
 ## setup the client
 
-Include the script below to your client e.g. static main.js & change `YOUR_PORT` with a free port of your choice. The default port is `3000`.<br>
+Include the script below to your client e.g. a static main.js & change `YOUR_PORT` with a free port of your choice. The default port is `3000`.<br>
 ```js
 function tryConnectToReload(address) {
   var conn;
