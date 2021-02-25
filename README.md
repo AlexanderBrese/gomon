@@ -4,7 +4,7 @@ It also reloads the `browser` upon change.
 
 # How does it work?
 
-Plain: Watches for changes on the server, reloads the server and reloads the browser.<br><br>
+Plain: Watches for changes on the server, reloads the server and syncs the browser.<br><br>
 ![how-does-it-work](https://github.com/AlexanderBrese/go-server-browser-reload/blob/main/go-server-browser-reload.png)
 
 # Usage
