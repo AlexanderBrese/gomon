@@ -1,11 +1,11 @@
-# why is it necessary
+# Why is it necessary?
 
-# how does it work
+# How does it work?
 
 Plain: Watches for changes on the server, reloads the server and reloads the browser.<br><br>
 ![how-does-it-work](https://github.com/AlexanderBrese/go-server-browser-reload/blob/main/go-server-browser-reload.png)
 
-# how is it used
+# Usage
 
 ## setup the client
 
@@ -48,3 +48,5 @@ go get -u github.com/AlexanderBrese/go-server-browser-reload
 ```
 
 ## run go-server-browser-reload 
+
+# What features is it going to provide?
