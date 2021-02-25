@@ -58,7 +58,7 @@ go-server-browser-reload -c PATH_TO_YOUR_CONFIG
 
 ## configure go-server-browser-reload
 
-Default configuration:
+`Default` configuration:
 ```toml
 # Use go to build the binary as usual
 cmd = "go build -o ./tmp/main ."
