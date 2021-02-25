@@ -1,5 +1,7 @@
 # Why is it necessary?
 
+It also reloads the browser upon change.
+
 # How does it work?
 
 Plain: Watches for changes on the server, reloads the server and reloads the browser.<br><br>
@@ -50,3 +52,8 @@ go get -u github.com/AlexanderBrese/go-server-browser-reload
 ## run go-server-browser-reload 
 
 # What features is it going to provide?
+
+The goals for version 1.0.0 are:
+- Linux/MacOS Support (currently windows only)
+- Colorful log messages
+- Customize binary execution with environmental flags
