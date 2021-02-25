@@ -1,6 +1,6 @@
 # Why is it necessary?
 
-It also reloads the browser upon change.
+It also reloads the `browser` upon change.
 
 # How does it work?
 
@@ -50,7 +50,7 @@ go get -u github.com/AlexanderBrese/go-server-browser-reload
 
 ## run go-server-browser-reload 
 
-If you want to configure the reload behavior or set change paths then just provide a config to the process.
+If you want to configure the reload behavior or set change paths then just provide a `configuration` to the process.
 
 ```
 go-server-browser-reload -c PATH_TO_YOUR_CONFIG
@@ -78,7 +78,7 @@ delay = 1000
 
 # What features is it going to provide?
 
-The goals for version 1.0.0 are:
+The goals for version `1.0.0` are:
 - Linux/MacOS Support (currently windows only)
 - Colorful log messages
 - Customize binary execution with environmental flags
