@@ -11,7 +11,7 @@ Plain: Watches for changes on the server, reloads the server and reloads the bro
 
 ## setup the client
 
-Include the script below to your client e.g. static main.js & change `"YOUR_PORT"` with a free port of your choice. The default port is `"3000"`.<br>
+Include the script below to your client e.g. static main.js & change `YOUR_PORT` with a free port of your choice. The default port is `3000`.<br>
 ```js
 function tryConnectToReload(address) {
   var conn;
@@ -49,6 +49,32 @@ go get -u github.com/AlexanderBrese/go-server-browser-reload
 ```
 
 ## run go-server-browser-reload 
+
+If you want to configure the reload behavior or set change paths then just provide a config to the process.
+
+```
+go-server-browser-reload -c PATH_TO_YOUR_CONFIG
+```
+
+## configure go-server-browser-reload
+
+Default configuration:
+```toml
+# Use go to build the binary as usual
+cmd = "go build -o ./tmp/main ."
+# The port used for the browser syncing server
+port = 3000
+# Watch these extensions
+include_ext = ["go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"]
+# Watch these directories
+include_dir = []
+# Ignore these files
+exclude_file = []
+# Ignore these directories
+exclude_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
+# Buffer changes before rebuilding for a certain amount of time (ms)
+delay = 1000
+```
 
 # What features is it going to provide?
 
