@@ -4,7 +4,7 @@ It also reloads the `browser` upon change.
 
 # How does it work?
 
-Plain: Watches for code changes, rebuilds and reruns the specified binary e.g. a webserver. Then it calls the client through a websocket to reload.<br><br>
+Plain: Watches for code changes, reloads the specified binary e.g. a webserver and calls the client through a websocket to reload.<br><br>
 ![how-does-it-work](https://github.com/AlexanderBrese/go-server-browser-reload/blob/main/go-server-browser-reload.png)
 
 # Usage
