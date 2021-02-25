@@ -1,15 +1,17 @@
 # why is it necessary
 
-
 # how does it work
-Plain: Watches for changes on the server, reloads the server and reloads the browser.<br>
+
+Plain: Watches for changes on the server, reloads the server and reloads the browser.<br><br>
 ![how-does-it-work](https://github.com/AlexanderBrese/go-server-browser-reload/blob/main/go-server-browser-reload.png)
 
 # how is it used
+
 ## setup the client
+
 Include the script below to your client e.g. static main.js<br>
 Change YOUR_PORT with a free port of your choice e.g. 3000.<br>
-
+```js
 function tryConnectToReload(address) {
   var conn;
   // This is a statically defined port on which the app is hosting the reload service.
@@ -37,8 +39,12 @@ try {
 } catch (ex) {
   console.log('Exception during connecting to reload:', ex);
 }
-## install go-server-browser-reload
-On a command line execute this.<br>
+```
 
+## install go-server-browser-reload
+
+```
 go get -u github.com/AlexanderBrese/go-server-browser-reload
+```
+
 ## run go-server-browser-reload 
