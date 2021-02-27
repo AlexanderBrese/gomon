@@ -1,29 +1,31 @@
-// assumptions:
-// - type toml
-// - predefined file path
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
+	"github.com/imdario/mergo"
 	"github.com/pelletier/go-toml"
 )
 
+// ParsedConfiguration parses a configuration file and merges it with the default configuration
 func ParsedConfiguration(path string) (*Configuration, error) {
 	if path == "" {
-		return _default(), nil
-	} else if err := _check(path); err != nil {
+		return defaultConfiguration, nil
+	} else if err := checkPath(path); err != nil {
 		return nil, err
 	} else {
-		return _parse(path)
+		cfg, err := _parse(path)
+		if err != nil {
+			return nil, err
+		}
+		err = _merge(cfg)
+		if err != nil {
+			return nil, err
+		}
+		return cfg, err
 	}
 }
 
 func _parse(path string) (cfg *Configuration, err error) {
-	cfgData, err := _read(path)
+	cfgData, err := readFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -31,50 +33,29 @@ func _parse(path string) (cfg *Configuration, err error) {
 	if err != nil {
 		return nil, err
 	}
+	err = _validate(cfg)
+	if err != nil {
+		return nil, err
+	}
 	return cfg, err
 }
 
-func _unmarshal(cfgData []byte) (cfg *Configuration, err error) {
-	if err = toml.Unmarshal(cfgData, cfg); err != nil {
-		return nil, err
-	}
-	return cfg, nil
-}
-
-func _default() *Configuration {
-	return &Configuration{
-		SourceDir:   "cmd/web",
-		BuildDir:    "tmp/build",
-		LogDir:      "tmp/go-server-browser-reload.log",
-		WatchExt:    []string{"go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"},
-		IgnoreDir:   []string{"assets", "tmp", "vendor", "node_modules", "build"},
-		WatchDir:    []string{},
-		IgnoreFiles: []string{},
-		Delay:       1000,
-		Port:        3000,
-	}
-}
-
-func _check(path string) error {
-	absPath, err := _absolutePath(path)
-	if err != nil {
-		return fmt.Errorf("Failed to construct an absolute path for: %s", path)
-	}
-	_, err = _read(absPath)
+func _validate(cfg *Configuration) error {
+	absPath, err := absolutePath(cfg.SourceDir)
 	if err != nil {
 		return err
 	}
-	return nil
+	return checkPath(absPath)
 }
 
-func _absolutePath(path string) (string, error) {
-	wd, err := os.Getwd()
-	if err != nil {
-		return "", err
+func _merge(cfg *Configuration) error {
+	return mergo.Merge(cfg, defaultConfiguration)
+}
+
+func _unmarshal(cfgData []byte) (*Configuration, error) {
+	cfg := new(Configuration)
+	if err := toml.Unmarshal(cfgData, cfg); err != nil {
+		return nil, err
 	}
-	return filepath.Join(wd, path), nil
-}
-
-func _read(path string) ([]byte, error) {
-	return ioutil.ReadFile(path)
+	return cfg, nil
 }
