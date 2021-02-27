@@ -28,7 +28,7 @@ function tryConnectToReload(address) {
 
     // the page will refresh every time a message is received.
     location.reload()
-  };
+  }; 
 }
 
 try {
@@ -53,25 +53,29 @@ go get -u github.com/AlexanderBrese/go-server-browser-reload
 If you want to configure the reload behavior or set change paths then just provide a `configuration` to the process.
 
 ```
-go-server-browser-reload -c PATH_TO_YOUR_CONFIG
+go-server-browser-reload [-c PATH_TO_YOUR_CONFIG]
 ```
 
 ## configure go-server-browser-reload
 
 `Default` configuration:
 ```toml
-# Use go to build the binary as usual
-cmd = "go build -o ./tmp/main ."
+# What should we built from?
+relative_source_dir = "cmd/web"
+# Where should the build be stored?
+relative_build_dir = "tmp/build"
+# Where should the log be stored?
+relative_log_dir = "tmp/go-server-browser-reload.log"
 # The port used for the browser syncing server
 port = 3000
-# Watch these extensions
-include_ext = ["go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"]
-# Watch these directories
-include_dir = []
+# Watch these extensions for changes
+watch_relative_ext = ["go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"]
+# Watch these directories for changes
+watch_relative_dir = []
 # Ignore these files
-exclude_file = []
+ignore_relative_files = []
 # Ignore these directories
-exclude_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
+ignore_relative_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
 # Buffer changes before rebuilding for a certain amount of time (ms)
 delay = 1000
 ```
