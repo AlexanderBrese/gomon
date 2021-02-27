@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"io/ioutil"
@@ -6,14 +6,14 @@ import (
 	"path/filepath"
 )
 
-func checkPath(path string) error {
+func CheckPath(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return err
 	}
 	return nil
 }
 
-func absolutePath(path string) (string, error) {
+func AbsolutePath(path string) (string, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return "", err
@@ -21,49 +21,49 @@ func absolutePath(path string) (string, error) {
 	return filepath.Join(wd, path), nil
 }
 
-func readFile(path string) ([]byte, error) {
+func ReadFile(path string) ([]byte, error) {
 	return ioutil.ReadFile(path)
 }
 
-func createDir(path string) error {
+func CreateDir(path string) error {
 	return os.MkdirAll(path, os.ModePerm)
 }
 
-func createFile(path string, content []byte) (*os.File, error) {
+func CreateFile(path string, content []byte) (*os.File, error) {
 	var (
 		f   *os.File
 		err error
 	)
-	if err = checkPath(path); err != nil {
-		if f, err = openFile(path); err != nil {
+	if err = CheckPath(path); err != nil {
+		if f, err = OpenFile(path); err != nil {
 			return nil, err
 		}
 	}
 
-	defer closeFile(f)
+	defer CloseFile(f)
 
-	if err = writeFile(f, content); err != nil {
+	if err = WriteFile(f, content); err != nil {
 		return nil, err
 	}
 	return f, nil
 }
 
-func writeFile(file *os.File, content []byte) error {
+func WriteFile(file *os.File, content []byte) error {
 	if _, err := file.Write(content); err != nil {
 		return err
 	}
 	return nil
 }
 
-func closeFile(file *os.File) {
+func CloseFile(file *os.File) {
 	file.Close()
 }
 
-func deletePath(path string) {
+func DeletePath(path string) {
 	os.RemoveAll(path)
 }
 
-func openFile(path string) (*os.File, error) {
+func OpenFile(path string) (*os.File, error) {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err

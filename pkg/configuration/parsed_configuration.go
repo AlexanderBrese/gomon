@@ -1,6 +1,7 @@
-package main
+package configuration
 
 import (
+	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
 	"github.com/imdario/mergo"
 	"github.com/pelletier/go-toml"
 )
@@ -9,7 +10,7 @@ import (
 func ParsedConfiguration(path string) (*Configuration, error) {
 	if path == "" {
 		return defaultConfiguration, nil
-	} else if err := checkPath(path); err != nil {
+	} else if err := utils.CheckPath(path); err != nil {
 		return nil, err
 	} else {
 		cfg, err := _parse(path)
@@ -25,7 +26,7 @@ func ParsedConfiguration(path string) (*Configuration, error) {
 }
 
 func _parse(path string) (cfg *Configuration, err error) {
-	cfgData, err := readFile(path)
+	cfgData, err := utils.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -41,11 +42,11 @@ func _parse(path string) (cfg *Configuration, err error) {
 }
 
 func _validate(cfg *Configuration) error {
-	absPath, err := absolutePath(cfg.SourceDir)
+	absPath, err := utils.AbsolutePath(cfg.SourceDir)
 	if err != nil {
 		return err
 	}
-	return checkPath(absPath)
+	return utils.CheckPath(absPath)
 }
 
 func _merge(cfg *Configuration) error {

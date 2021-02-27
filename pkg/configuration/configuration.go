@@ -1,7 +1,9 @@
-package main
+package configuration
 
 import (
 	"time"
+
+	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
 )
 
 // Configuration is a in-memory representation of the expected configuration file
@@ -34,13 +36,13 @@ func (c *Configuration) delay() time.Duration {
 }
 
 func (c *Configuration) srcPath() (string, error) {
-	return absolutePath(c.SourceDir)
+	return utils.AbsolutePath(c.SourceDir)
 }
 
 func (c *Configuration) buildPath() (string, error) {
-	return absolutePath(c.BuildDir)
+	return utils.AbsolutePath(c.BuildDir)
 }
 
 func (c *Configuration) logPath() (string, error) {
-	return absolutePath(c.LogDir)
+	return utils.AbsolutePath(c.LogDir)
 }
