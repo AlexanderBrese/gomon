@@ -1,4 +1,4 @@
-package monitoring
+package utils
 
 import (
 	"crypto/sha256"
@@ -12,6 +12,10 @@ import (
 type FileChecksums struct {
 	lock    sync.Mutex
 	storage map[string]string
+}
+
+func NewFileChecksums() *FileChecksums {
+	return &FileChecksums{storage: make(map[string]string)}
 }
 
 // UpdateFileChecksum updates the checksum for the given path in a thread-safe manner
@@ -42,7 +46,7 @@ func (c *FileChecksums) HasChanged(path string) bool {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	return newChecksum == c.storage[path]
+	return newChecksum != c.storage[path]
 }
 
 func fileChecksum(path string) (string, error) {
