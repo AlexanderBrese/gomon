@@ -13,11 +13,11 @@ func ParsedConfiguration(path string) (*Configuration, error) {
 	} else if err := utils.CheckPath(path); err != nil {
 		return nil, err
 	} else {
-		cfg, err := _parse(path)
+		cfg, err := parse(path)
 		if err != nil {
 			return nil, err
 		}
-		err = _merge(cfg)
+		err = merge(cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -25,35 +25,35 @@ func ParsedConfiguration(path string) (*Configuration, error) {
 	}
 }
 
-func _parse(path string) (cfg *Configuration, err error) {
+func parse(path string) (cfg *Configuration, err error) {
 	cfgData, err := utils.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	cfg, err = _unmarshal(cfgData)
+	cfg, err = unmarshal(cfgData)
 	if err != nil {
 		return nil, err
 	}
-	err = _validate(cfg)
+	err = validate(cfg)
 	if err != nil {
 		return nil, err
 	}
 	return cfg, err
 }
 
-func _validate(cfg *Configuration) error {
-	absPath, err := utils.AbsolutePath(cfg.SourceDir)
+func validate(cfg *Configuration) error {
+	absPath, err := utils.AbsolutePath(cfg.sourceDir)
 	if err != nil {
 		return err
 	}
 	return utils.CheckPath(absPath)
 }
 
-func _merge(cfg *Configuration) error {
+func merge(cfg *Configuration) error {
 	return mergo.Merge(cfg, defaultConfiguration)
 }
 
-func _unmarshal(cfgData []byte) (*Configuration, error) {
+func unmarshal(cfgData []byte) (*Configuration, error) {
 	cfg := new(Configuration)
 	if err := toml.Unmarshal(cfgData, cfg); err != nil {
 		return nil, err
