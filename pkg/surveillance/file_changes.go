@@ -1,4 +1,4 @@
-package monitoring
+package surveillance
 
 import (
 	"fmt"
@@ -15,14 +15,20 @@ import (
 )
 
 type FileChanges struct {
-	config               *configuration.Configuration
-	watcher              *fsnotify.Watcher
-	stopWatcherChan      chan bool
-	stopWatchingChan     chan bool
-	watchedFilesChan     chan string
-	watchedDirs          uint
+	config *configuration.Configuration
+
+	watcher *fsnotify.Watcher
+
+	watchedFilesSubscriberChan chan string
+	stopWatcherChan            chan bool
+	stopWatchingChan           chan bool
+	watchedFilesChan           chan string
+
+	watchedDirs uint
+
 	watchedFileChecksums *utils.FileChecksums
-	mu                   sync.Mutex
+
+	mu sync.Mutex
 }
 
 func NewFileChanges(cfg *configuration.Configuration) (*FileChanges, error) {
@@ -45,12 +51,16 @@ func NewFileChanges(cfg *configuration.Configuration) (*FileChanges, error) {
 	return w, nil
 }
 
-func (w *FileChanges) Watch() error {
-	if err := w.watch(w.config.Root); err != nil {
-		return err
-	}
+func (w *FileChanges) Subscribe(subscriberChan chan string) {
+	w.watchedFilesSubscriberChan = subscriberChan
+}
 
-	w.start()
+func (w *FileChanges) Init() error {
+	return w.watch(w.config.Root)
+}
+
+func (w *FileChanges) Watch() error {
+	w.control()
 
 	return w.cleanup()
 }
@@ -59,20 +69,25 @@ func (w *FileChanges) StopWatching() {
 	w.stopWatchingChan <- true
 }
 
-func (w *FileChanges) start() {
+func (w *FileChanges) control() {
 	for {
 		var filePath string
 		select {
 		case <-w.stopWatchingChan:
 			return
 		case filePath = <-w.watchedFilesChan:
-			fmt.Printf("%s has changed\n", utils.RelPath(w.config.Root, filePath))
+			relPath, err := utils.RelPath(w.config.Root, filePath)
+			if err != nil {
+				log.Print(err)
+			}
+			fmt.Printf("%s has changed\n", relPath)
 			w.delay()
 		}
 	}
 }
 
 func (w *FileChanges) cleanup() error {
+	w.closeSubscription()
 	w.stopWatchingDirs()
 
 	if err := w.closeWatcher(); err != nil {
@@ -95,6 +110,10 @@ func (w *FileChanges) stopWatchingDirs() {
 
 func (w *FileChanges) closeWatcher() error {
 	return w.watcher.Close()
+}
+
+func (w *FileChanges) closeSubscription() {
+	close(w.watchedFilesSubscriberChan)
 }
 
 func (w *FileChanges) removeBuildDir() error {
@@ -183,7 +202,10 @@ func (w *FileChanges) watchDir(path string) error {
 				break
 			}
 			filePath := ev.Name
-			if utils.IsDir(filePath) {
+			isDir, err := utils.IsDir(filePath)
+			if err != nil {
+				log.Print(err)
+			} else if isDir {
 				// Directory was removed
 				if isWatchRemoveEvent(ev) {
 					if err := w.removeWatch(filePath); err != nil {
@@ -195,10 +217,15 @@ func (w *FileChanges) watchDir(path string) error {
 				w.watch(filePath)
 				break
 			}
-			if w.isExcludedFile(filePath) || w.hasNotChanged(filePath) {
+			hasNotChanged, err := w.hasNotChanged(filePath)
+			if err != nil {
+				log.Print(err)
+			}
+			if w.isExcludedFile(filePath) || hasNotChanged {
 				break
 			}
 			w.watchedFilesChan <- filePath
+			w.watchedFilesSubscriberChan <- filePath
 		case err := <-w.watcher.Errors:
 			log.Printf("error: during file watch at %s: %s", path, err)
 		}
@@ -302,8 +329,12 @@ func (w *FileChanges) isIgnoredExt(path string) bool {
 	return true
 }
 
-func (w *FileChanges) hasNotChanged(path string) bool {
-	return !w.watchedFileChecksums.HasChanged(path)
+func (w *FileChanges) hasNotChanged(path string) (bool, error) {
+	hasChanged, err := w.watchedFileChecksums.HasChanged(path)
+	if err != nil {
+		return true, err
+	}
+	return !hasChanged, nil
 }
 
 func (w *FileChanges) addWatch(path string) error {

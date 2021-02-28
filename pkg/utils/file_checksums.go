@@ -19,10 +19,10 @@ func NewFileChecksums() *FileChecksums {
 }
 
 // UpdateFileChecksum updates the checksum for the given path in a thread-safe manner
-func (c *FileChecksums) UpdateFileChecksum(path string) (ok bool) {
+func (c *FileChecksums) UpdateFileChecksum(path string) (bool, error) {
 	newChecksum, err := fileChecksum(path)
 	if err != nil {
-		return false
+		return false, err
 	}
 
 	c.lock.Lock()
@@ -31,22 +31,22 @@ func (c *FileChecksums) UpdateFileChecksum(path string) (ok bool) {
 	oldChecksum, ok := c.storage[path]
 	if !ok || oldChecksum != newChecksum {
 		c.storage[path] = newChecksum
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
-func (c *FileChecksums) HasChanged(path string) bool {
+func (c *FileChecksums) HasChanged(path string) (bool, error) {
 	newChecksum, err := fileChecksum(path)
 	if err != nil {
-		return false
+		return false, err
 	}
 
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	return newChecksum != c.storage[path]
+	return newChecksum != c.storage[path], nil
 }
 
 func fileChecksum(path string) (string, error) {

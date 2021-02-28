@@ -9,7 +9,7 @@ import (
 // ParsedConfiguration parses a configuration file and merges it with the default configuration
 func ParsedConfiguration(path string) (*Configuration, error) {
 	if path == "" {
-		return defaultConfiguration, nil
+		return DefaultConfiguration(), nil
 	} else if err := utils.CheckPath(path); err != nil {
 		return nil, err
 	} else {
@@ -50,7 +50,7 @@ func validate(cfg *Configuration) error {
 }
 
 func merge(cfg *Configuration) error {
-	return mergo.Merge(cfg, defaultConfiguration)
+	return mergo.Merge(cfg, DefaultConfiguration)
 }
 
 func unmarshal(cfgData []byte) (*Configuration, error) {

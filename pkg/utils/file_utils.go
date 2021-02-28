@@ -14,33 +14,36 @@ func CheckPath(path string) error {
 	return nil
 }
 
-func IsDir(path string) bool {
+func IsDir(path string) (bool, error) {
 	f, err := os.Stat(path)
 	if err != nil {
-		return false
+		return false, err
 	}
-	return f.IsDir()
+	return f.IsDir(), nil
 }
 
-func RelPath(root string, path string) string {
+func RelPath(root string, path string) (string, error) {
 	s, err := filepath.Rel(root, path)
 	if err != nil {
-		return ""
+		return "", err
 	}
-	return s
+	return s, nil
 }
 
-func RootPath() string {
+func RootPath() (string, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Printf("error: could not get root path: %s", err)
-		return ""
+		return "", err
 	}
-	return wd
+	return wd, nil
 }
 
 func AbsolutePath(relPath string) (string, error) {
-	root := RootPath()
+	root, err := RootPath()
+	if err != nil {
+		return "", err
+	}
 	return filepath.Join(root, relPath), nil
 }
 
@@ -87,8 +90,8 @@ func WriteFile(file *os.File, content []byte) error {
 	return nil
 }
 
-func CloseFile(file *os.File) {
-	file.Close()
+func CloseFile(file *os.File) error {
+	return file.Close()
 }
 
 func DeletePath(path string) error {

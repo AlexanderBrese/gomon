@@ -12,8 +12,8 @@ func TestNoConfigProvided(t *testing.T) {
 	if err != nil {
 		t.Errorf("want: config, got: %q", err)
 	}
-	if cfg != defaultConfiguration {
-		t.Errorf("want: %q, got: %q", defaultConfiguration, cfg)
+	if cfg != DefaultConfiguration() {
+		t.Errorf("want: %q, got: %q", DefaultConfiguration(), cfg)
 	}
 }
 

@@ -6,6 +6,16 @@ import (
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
 )
 
+var root string
+
+func init() {
+	var err error
+	root, err = utils.RootPath()
+	if err != nil {
+		panic(err)
+	}
+}
+
 // Configuration is a in-memory representation of the expected configuration file
 type Configuration struct {
 	sourceDir   string   `toml:"relative_source_dir"`
@@ -20,16 +30,19 @@ type Configuration struct {
 	Root        string
 }
 
-var defaultConfiguration = &Configuration{
-	sourceDir:   "cmd/web",
-	buildDir:    "tmp",
-	logDir:      "tmp",
-	WatchExts:   []string{"go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"},
-	IgnoreDirs:  []string{"assets", "tmp", "vendor", "node_modules", "build"},
-	WatchDirs:   []string{},
-	IgnoreFiles: []string{},
-	delay:       1000,
-	Port:        3000,
+func DefaultConfiguration() *Configuration {
+	return &Configuration{
+		sourceDir:   "cmd/web",
+		buildDir:    "tmp",
+		logDir:      "tmp",
+		WatchExts:   []string{"go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"},
+		IgnoreDirs:  []string{"assets", "tmp", "vendor", "node_modules", "build"},
+		WatchDirs:   []string{},
+		IgnoreFiles: []string{},
+		delay:       1000,
+		Port:        3000,
+		Root:        root,
+	}
 }
 
 func (c *Configuration) Delay() time.Duration {

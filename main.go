@@ -27,15 +27,16 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	cfg, err := parse(cfgPath)
+	cfg, err := parse("test.toml")
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	path := utils.RootPath()
-	cfg.Root = path
 	fileChanges, err := monitoring.NewFileChanges(cfg)
 	if err != nil {
+		log.Fatal(err)
+	}
+	if err := fileChanges.Init(); err != nil {
 		log.Fatal(err)
 	}
 	go func() {
