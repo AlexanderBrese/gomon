@@ -50,7 +50,15 @@ func main() {
 }
 
 func parse(cfgPath string) (*configuration.Configuration, error) {
-	cfg, err := configuration.ParsedConfiguration(cfgPath)
+	absPath := ""
+	if cfgPath != "" {
+		var err error
+		absPath, err = utils.AbsolutePath(cfgPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+	cfg, err := configuration.ParsedConfiguration(absPath)
 	if err != nil {
 		return nil, err
 	}
