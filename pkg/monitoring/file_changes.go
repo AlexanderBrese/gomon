@@ -1,6 +1,7 @@
 package monitoring
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -20,7 +21,7 @@ type FileChanges struct {
 	stopWatchingChan     chan bool
 	watchedFilesChan     chan string
 	watchedDirs          uint
-	watchedFileChecksums *FileChecksums
+	watchedFileChecksums *utils.FileChecksums
 	mu                   sync.Mutex
 }
 
@@ -39,13 +40,13 @@ func NewFileChanges(cfg *configuration.Configuration) (*FileChanges, error) {
 		watchedDirs:      0,
 	}
 
-	w.watchedFileChecksums = &FileChecksums{storage: make(map[string]string)}
+	w.watchedFileChecksums = utils.NewFileChecksums()
 
 	return w, nil
 }
 
-func (w *FileChanges) Watch(path string) error {
-	if err := w.watch(path); err != nil {
+func (w *FileChanges) Watch() error {
+	if err := w.watch(w.config.Root); err != nil {
 		return err
 	}
 
@@ -60,14 +61,13 @@ func (w *FileChanges) StopWatching() {
 
 func (w *FileChanges) start() {
 	for {
+		var filePath string
 		select {
 		case <-w.stopWatchingChan:
 			return
-		case file := <-w.watchedFilesChan:
+		case filePath = <-w.watchedFilesChan:
+			fmt.Printf("%s has changed\n", utils.RelPath(w.config.Root, filePath))
 			w.delay()
-			if w.isExcludedFile(file) || w.hasNotChanged(file) {
-				continue
-			}
 		}
 	}
 }
@@ -134,54 +134,75 @@ func (w *FileChanges) watch(path string) error {
 			if err = w.updateFileChecksums(path); err != nil {
 				return err
 			}
-			return w.watchDir(path)
+			go w.watchDir(path)
 		}
 		return nil
 	})
 }
 
-func (w *FileChanges) watchDir(path string) error {
-	go func() {
-		utils.WithLock(&w.mu, func() {
-			w.watchedDirs++
-		})
-		defer func() {
-			utils.WithLock(&w.mu, func() {
-				w.watchedDirs--
-			})
-		}()
-
-		for {
-			select {
-			case <-w.stopWatcherChan:
-				return
-			case ev := <-w.eventsChan():
-				if !isValidWatchEvent(ev) {
-					break
-				}
-				filePath := ev.Name
-				if utils.IsDir(filePath) {
-					// Directory was removed
-					if isWatchRemoveEvent(ev) {
-						if err := w.removeWatch(filePath); err != nil {
-							log.Printf("error: failed to stop watching %s: %s", filePath, err)
-						}
-						break
-					}
-					// Watch recursively
-					w.watch(filePath)
-					break
-				}
-				if w.isExcludedFile(filePath) {
-					break
-				}
-				w.watchedFilesChan <- filePath
-			case err := <-w.watcher.Errors:
-				log.Printf("error: during file watch at %s: %s", path, err)
-			}
+func (w *FileChanges) updateFileChecksums(path string) error {
+	skipFirst := true
+	return filepath.WalkDir(path, func(path string, d os.DirEntry, err error) error {
+		if skipFirst {
+			skipFirst = false
+			return nil
 		}
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return filepath.SkipDir
+		}
+
+		if w.isExcludedFile(path) {
+			return nil
+		}
+
+		w.watchedFileChecksums.UpdateFileChecksum(path)
+
+		return nil
+	})
+}
+
+func (w *FileChanges) watchDir(path string) error {
+	utils.WithLock(&w.mu, func() {
+		w.watchedDirs++
+	})
+	defer func() {
+		utils.WithLock(&w.mu, func() {
+			w.watchedDirs--
+		})
 	}()
-	return nil
+
+	for {
+		select {
+		case <-w.stopWatcherChan:
+			return nil
+		case ev := <-w.eventsChan():
+			if !isValidWatchEvent(ev) {
+				break
+			}
+			filePath := ev.Name
+			if utils.IsDir(filePath) {
+				// Directory was removed
+				if isWatchRemoveEvent(ev) {
+					if err := w.removeWatch(filePath); err != nil {
+						log.Printf("error: failed to stop watching %s: %s", filePath, err)
+					}
+					break
+				}
+				// Watch recursively
+				w.watch(filePath)
+				break
+			}
+			if w.isExcludedFile(filePath) || w.hasNotChanged(filePath) {
+				break
+			}
+			w.watchedFilesChan <- filePath
+		case err := <-w.watcher.Errors:
+			log.Printf("error: during file watch at %s: %s", path, err)
+		}
+	}
 }
 
 func (w *FileChanges) isExcludedDir(path string) bool {
@@ -225,13 +246,9 @@ func (w *FileChanges) isIgnoredDir(path string) bool {
 }
 
 func (w *FileChanges) isWatchedDir(path string) bool {
-	iDirs := w.config.IgnoreDirs
+	iDirs := w.config.WatchDirs
 	if len(iDirs) == 0 {
 		return true
-	}
-
-	if path == utils.RootPath() {
-		return false
 	}
 
 	for _, d := range iDirs {
@@ -278,34 +295,15 @@ func (w *FileChanges) isIgnoredExt(path string) bool {
 
 	for _, e := range w.config.WatchExts {
 		if ext == "."+strings.TrimSpace(e) {
-			return true
+			return false
 		}
 	}
 
-	return false
+	return true
 }
 
 func (w *FileChanges) hasNotChanged(path string) bool {
 	return !w.watchedFileChecksums.HasChanged(path)
-}
-
-func (w *FileChanges) updateFileChecksums(path string) error {
-	return filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return filepath.SkipDir
-		}
-
-		if w.isExcludedFile(path) {
-			return nil
-		}
-
-		w.watchedFileChecksums.UpdateFileChecksum(path)
-
-		return nil
-	})
 }
 
 func (w *FileChanges) addWatch(path string) error {
