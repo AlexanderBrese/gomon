@@ -22,6 +22,14 @@ func IsDir(path string) bool {
 	return f.IsDir()
 }
 
+func RelPath(root string, path string) string {
+	s, err := filepath.Rel(root, path)
+	if err != nil {
+		return ""
+	}
+	return s
+}
+
 func RootPath() string {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -83,8 +91,8 @@ func CloseFile(file *os.File) {
 	file.Close()
 }
 
-func DeletePath(path string) {
-	os.RemoveAll(path)
+func DeletePath(path string) error {
+	return os.RemoveAll(path)
 }
 
 func OpenFile(path string) (*os.File, error) {
