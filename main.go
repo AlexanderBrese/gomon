@@ -35,7 +35,7 @@ func main() {
 		return
 	}
 
-	_, err = monitoring.NewFileChangesWatch(cfg)
+	_, err = monitoring.NewFileChanges(cfg)
 	if err != nil {
 		log.Fatal(err)
 		return
