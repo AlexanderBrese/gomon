@@ -1,7 +1,6 @@
 package configuration
 
 import (
-	"os"
 	"time"
 
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
@@ -18,6 +17,7 @@ type Configuration struct {
 	IgnoreFiles []string `toml:"ignore_relative_files"`
 	delay       int      `toml:"delay"`
 	Port        int      `toml:"port"`
+	Root        string
 }
 
 var defaultConfiguration = &Configuration{
@@ -54,7 +54,7 @@ func (c *Configuration) RemoveBuildDir() error {
 		return err
 	}
 
-	if err := os.RemoveAll(buildDir); err != nil {
+	if err := utils.DeletePath(buildDir); err != nil {
 		return err
 	}
 
