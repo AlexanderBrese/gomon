@@ -10,7 +10,7 @@ import (
 func TestNoConfigProvided(t *testing.T) {
 	cfg, err := ParsedConfiguration("")
 	if err != nil {
-		t.Errorf("want: error, got: %q", err)
+		t.Errorf("want: config, got: %q", err)
 	}
 	if cfg != defaultConfiguration {
 		t.Errorf("want: %q, got: %q", defaultConfiguration, cfg)
@@ -25,7 +25,7 @@ func TestWrongConfigName(t *testing.T) {
 
 func TestInvalidSourcePathProvided(t *testing.T) {
 	testCfg := &Configuration{
-		SourceDir: "wrong_source_dir",
+		sourceDir: "wrong_source_dir",
 	}
 	cfgData, err := toml.Marshal(testCfg)
 	if err != nil {
