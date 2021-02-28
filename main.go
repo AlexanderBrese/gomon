@@ -20,36 +20,37 @@ var (
 func init() {
 	flag.StringVar(&cfgPath, "c", "", "config path")
 	flag.Parse()
-
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 }
 
 func main() {
 	defer _recover()
-	_onInterrupt()
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	cfg, err := parse(cfgPath)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-
-	_, err = monitoring.NewFileChanges(cfg)
+	path := utils.RootPath()
+	cfg.Root = path
+	fileChanges, err := monitoring.NewFileChanges(cfg)
 	if err != nil {
 		log.Fatal(err)
-		return
+	}
+	go func() {
+		<-sigs
+		fileChanges.StopWatching()
+	}()
+
+	if err := fileChanges.Watch(); err != nil {
+		log.Fatal(err)
 	}
 
-	// Run
 }
 
 func parse(cfgPath string) (*configuration.Configuration, error) {
-	absPath, err := utils.AbsolutePath(cfgPath)
-	if err != nil {
-		return nil, err
-	}
-	cfg, err := configuration.ParsedConfiguration(absPath)
+	cfg, err := configuration.ParsedConfiguration(cfgPath)
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +62,4 @@ func _recover() {
 	if e := recover(); e != nil {
 		log.Fatalf("PANIC: %+v", e)
 	}
-}
-
-func _onInterrupt() {
-	<-sigs
-	// Stop
 }
