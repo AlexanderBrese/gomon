@@ -2,6 +2,7 @@ package utils
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -13,12 +14,26 @@ func CheckPath(path string) error {
 	return nil
 }
 
-func AbsolutePath(path string) (string, error) {
+func IsDir(path string) bool {
+	f, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return f.IsDir()
+}
+
+func RootPath() string {
 	wd, err := os.Getwd()
 	if err != nil {
-		return "", err
+		log.Printf("error: could not get root path: %s", err)
+		return ""
 	}
-	return filepath.Join(wd, path), nil
+	return wd
+}
+
+func AbsolutePath(relPath string) (string, error) {
+	root := RootPath()
+	return filepath.Join(root, relPath), nil
 }
 
 func ReadFile(path string) ([]byte, error) {
@@ -26,7 +41,16 @@ func ReadFile(path string) ([]byte, error) {
 }
 
 func CreateDir(path string) error {
-	return os.MkdirAll(path, os.ModePerm)
+	return os.Mkdir(path, os.ModePerm)
+}
+
+func CreateDirIfNotExist(path string) error {
+	if err := CheckPath(path); err != nil {
+		if err = CreateDir(path); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func CreateFile(path string, content []byte) (*os.File, error) {
