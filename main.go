@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/monitoring"
+	"github.com/AlexanderBrese/go-server-browser-reload/pkg/surveillance"
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
 )
 
@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	fileChanges, err := monitoring.NewFileChanges(cfg)
+	fileChanges, err := surveillance.NewFileChanges(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
