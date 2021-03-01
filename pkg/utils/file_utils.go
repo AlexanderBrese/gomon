@@ -98,6 +98,10 @@ func DeletePath(path string) error {
 	return os.RemoveAll(path)
 }
 
+func DeleteFile(filePath string) error {
+	return os.Remove(filePath)
+}
+
 func OpenFile(path string) (*os.File, error) {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
