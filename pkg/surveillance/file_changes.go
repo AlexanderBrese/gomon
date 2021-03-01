@@ -87,7 +87,6 @@ func (w *FileChanges) control() {
 }
 
 func (w *FileChanges) cleanup() error {
-	w.closeSubscription()
 	w.stopWatchingDirs()
 
 	if err := w.closeWatcher(); err != nil {
@@ -197,7 +196,7 @@ func (w *FileChanges) watchDir(path string) error {
 		select {
 		case <-w.stopWatcherChan:
 			return nil
-		case ev := <-w.eventsChan():
+		case ev := <-w.watcher.Events:
 			if !isValidWatchEvent(ev) {
 				break
 			}
@@ -345,13 +344,8 @@ func (w *FileChanges) removeWatch(path string) error {
 	return w.watcher.Remove(path)
 }
 
-func (w *FileChanges) eventsChan() chan fsnotify.Event {
-	return w.watcher.Events
-}
-
 func isValidWatchEvent(ev fsnotify.Event) bool {
-	return ev.Op&fsnotify.Create == fsnotify.Create ||
-		ev.Op&fsnotify.Write == fsnotify.Write ||
+	return ev.Op&fsnotify.Write == fsnotify.Write ||
 		ev.Op&fsnotify.Remove == fsnotify.Remove
 }
 
