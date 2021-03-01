@@ -10,72 +10,14 @@ import (
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
 )
 
-const DELAY = 1000
-
-func TestGoFileHasChangedWithDefaultSettings(t *testing.T) {
-	cfg := configuration.DefaultConfiguration()
-
-	fileChanges, err := NewFileChanges(cfg)
-	if err != nil {
-		t.Fatalf("error during file changes creation: %s", err)
-	}
-	watchedFilesSubscription := make(chan string)
-	fileChanges.Subscribe(watchedFilesSubscription)
-
-	if err := fileChanges.Init(); err != nil {
-		t.Fatal(err)
-	}
-
-	go func() {
-		fileChanges.Watch()
-	}()
-
-	filePath := filepath.Join(cfg.Root, "test.go")
-	if _, err = utils.CreateFile(filePath, []byte("test")); err != nil {
-		t.Fatalf("error during temp file creation: %s", err)
-	}
-	defer utils.DeletePath(filePath)
-
-	watchedFilePath := <-watchedFilesSubscription
-	if watchedFilePath != filePath {
-		t.Errorf("error: failed to detect a created file with content at %s", watchedFilePath)
-	}
-}
-
-func TestCustomExtFileHasChangedWithCustomSettings(t *testing.T) {
-	cfg := configuration.DefaultConfiguration()
-	cfg.WatchExts = []string{"custom"}
-
-	fileChanges, err := NewFileChanges(cfg)
-	if err != nil {
-		t.Fatalf("error during file changes creation: %s", err)
-	}
-	watchedFilesSubscription := make(chan string)
-	fileChanges.Subscribe(watchedFilesSubscription)
-
-	if err := fileChanges.Init(); err != nil {
-		t.Fatal(err)
-	}
-
-	go func() {
-		fileChanges.Watch()
-	}()
-
-	filePath := filepath.Join(cfg.Root, "test.custom")
-	if _, err = utils.CreateFile(filePath, []byte("test")); err != nil {
-		t.Fatalf("error during temp file creation: %s", err)
-	}
-	defer utils.DeletePath(filePath)
-	watchedFilePath := <-watchedFilesSubscription
-	if watchedFilePath != filePath {
-		t.Errorf("error: failed to detect a created file with content at %s", watchedFilePath)
-	}
-}
-
 func TestFileChanges(t *testing.T) {
 	defaultCfg := configuration.DefaultConfiguration()
 	customExtsCfg := configuration.DefaultConfiguration()
 	customExtsCfg.WatchExts = []string{"custom"}
+	customIgnoredDirCfg := configuration.DefaultConfiguration()
+	customIgnoredDirCfg.IgnoreDirs = []string{"ignored_dir"}
+	customIgnoredFileCfg := configuration.DefaultConfiguration()
+	customIgnoredFileCfg.IgnoreFiles = []string{"ignored"}
 
 	tests := []struct {
 		name             string
@@ -83,9 +25,13 @@ func TestFileChanges(t *testing.T) {
 		tmpPath          string
 		shouldBeDetected bool
 	}{
-		{"should be detected: .go file with default configuration", defaultCfg, "test.go", true},
-		{"should be detected: .custom file with custom ext configuration", customExtsCfg, "test.custom", true},
-		{"should not be detected: .go file with custom ext configuration", customExtsCfg, "test.go", true},
+		{".go file with default configuration", defaultCfg, "test.go", true},
+		{".custom file with custom ext configuration", customExtsCfg, "test.custom", true},
+		{".go file with custom ext configuration", customExtsCfg, "test.go", false},
+		{".go file in ignored dir with ignored dir configuration", customIgnoredDirCfg, "ignored_dir/test.go", false},
+		{".go file not in ignored dir with ignored dir configuration", customIgnoredDirCfg, "test.go", true},
+		{".go file in ignored files with ignored files configuration", customIgnoredFileCfg, "ignored.go", false},
+		{".go file not in ignored files with ignored files configuration", customIgnoredFileCfg, "test.go", true},
 	}
 
 	for _, tt := range tests {
@@ -97,30 +43,13 @@ func TestFileChanges(t *testing.T) {
 	}
 }
 
-/*
-func TestFileHasNotChangedAndDirIsIgnored() {
-
-}
-func TestFileHasChangedAndDirIsNotIgnored() {
-
-}
-
-func TestFileHasChangedAndDirIsWatched() {
-
-}
-
-func TestFileHasNotChangedAndDirIsNotWatched() {
-
-}
-*/
 func watch(cfg *configuration.Configuration, tmpPath string, shouldBeDetected bool) error {
 	fileChanges, err := NewFileChanges(cfg)
 	if err != nil {
 		return fmt.Errorf("error during file changes creation: %s", err)
 	}
-	watchedFilesSubscription := make(chan string)
+	watchedFilesSubscription := make(chan string, 1)
 	fileChanges.Subscribe(watchedFilesSubscription)
-	go unsubscribeDelayed(DELAY, watchedFilesSubscription)
 
 	if err := fileChanges.Init(); err != nil {
 		return err
@@ -129,13 +58,19 @@ func watch(cfg *configuration.Configuration, tmpPath string, shouldBeDetected bo
 	go func() {
 		fileChanges.Watch()
 	}()
-	defer fileChanges.StopWatching()
+
+	if !shouldBeDetected {
+		defer fileChanges.StopWatching()
+		go delayed(func() {
+			close(watchedFilesSubscription)
+		})
+	}
 
 	filePath := filepath.Join(cfg.Root, tmpPath)
 	if _, err = utils.CreateFile(filePath, []byte("test")); err != nil {
 		return fmt.Errorf("error during temp file creation: %s", err)
 	}
-	defer utils.DeletePath(filePath)
+	defer utils.DeleteFile(filePath)
 
 	watchedFilePath := <-watchedFilesSubscription
 	butWasDetected := watchedFilePath == filePath
@@ -150,10 +85,8 @@ func watch(cfg *configuration.Configuration, tmpPath string, shouldBeDetected bo
 }
 
 // assumption: a successful file change detection takes no longer than a certain (small) duration
-func unsubscribeDelayed(delay int, subscription chan string) {
-	time.Sleep(time.Duration(delay) * time.Millisecond)
-	_, closed := <-subscription
-	if !closed {
-		close(subscription)
-	}
+func delayed(f func()) {
+	const DELAY = 1000
+	time.Sleep(time.Duration(DELAY) * time.Millisecond)
+	f()
 }
