@@ -5,13 +5,13 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
 )
 
 func TestFileChanges(t *testing.T) {
-
 	defaultCfg := configuration.DefaultConfiguration()
 	customExtsCfg := configuration.TestConfiguration()
 	customExtsCfg.WatchExts = []string{"custom"}
@@ -46,16 +46,16 @@ func TestFileChanges(t *testing.T) {
 
 		{"An ignored file inside a watched directory should not be detected.", customIgnoredFileAndWatchedDirCfg, "watched/ignored.go", false},
 
-		{"A file with an invalid extension inside a watched directory should not be detected.", customWatchedDirAndWatchedExt, "watched/test.custom", false},
 		{"A file with a valid extension inside a watched directory should be detected.", customWatchedDirAndWatchedExt, "watched/test.go", true},
+		{"A file with an invalid extension inside a watched directory should not be detected.", customWatchedDirAndWatchedExt, "watched/test.custom", false},
+
+		{"Files outside the ignored folder should be detected.", customIgnoredDirCfg, "test.go", true},
+		{"Files in an ignored folder should not be detected.", customIgnoredDirCfg, "ignored/test.go", false},
 
 		{"A file with a valid custom extension should be detected.", customExtsCfg, "test.custom", true},
 		{"A file with an invalid custom extension should not be detected.", customExtsCfg, "test.go", false},
 
 		{"A file in a watched directory should be detected.", customIncludeDirCfg, "watched/test.go", true},
-
-		{"Files outside the ignored folder should be detected.", customIgnoredDirCfg, "test.go", true},
-		{"Files in an ignored folder should not be detected.", customIgnoredDirCfg, "ignored/test.go", false},
 
 		{"An ignored file should not be detected.", customIgnoredFileCfg, "ignored.go", false},
 
@@ -95,6 +95,7 @@ func watch(cfg *configuration.Configuration, relPath string, shouldBeDetected bo
 		if err := utils.CreateDir(dirFullPath); err != nil {
 			return err
 		}
+		time.Sleep(100 * time.Millisecond)
 		if err := createTempFile(fullPath); err != nil {
 			return err
 		}
