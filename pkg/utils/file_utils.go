@@ -69,16 +69,15 @@ func CreateFile(path string, content []byte) (*os.File, error) {
 		f   *os.File
 		err error
 	)
+
 	if err = CheckPath(path); err != nil {
 		if f, err = OpenFile(path); err != nil {
 			return nil, err
 		}
-	}
-
-	defer CloseFile(f)
-
-	if err = WriteFile(f, content); err != nil {
-		return nil, err
+		if err = WriteFile(f, content); err != nil {
+			return nil, err
+		}
+		defer CloseFile(f)
 	}
 	return f, nil
 }
