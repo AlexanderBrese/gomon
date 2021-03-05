@@ -1,0 +1,2 @@
+# Watch these extensions for changes
+watch_relative_ext = ["tpl", "tmpl", "html", "css", "js", "env", "yaml"]

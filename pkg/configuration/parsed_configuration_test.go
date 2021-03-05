@@ -1,18 +1,19 @@
-package main
+package configuration
 
 import (
 	"testing"
 
+	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
 	"github.com/pelletier/go-toml"
 )
 
 func TestNoConfigProvided(t *testing.T) {
 	cfg, err := ParsedConfiguration("")
 	if err != nil {
-		t.Errorf("want: error, got: %q", err)
+		t.Errorf("want: config, got: %q", err)
 	}
-	if cfg != defaultConfiguration {
-		t.Errorf("want: %q, got: %q", defaultConfiguration, cfg)
+	if cfg != DefaultConfiguration() {
+		t.Errorf("want: %q, got: %q", DefaultConfiguration(), cfg)
 	}
 }
 
@@ -24,7 +25,7 @@ func TestWrongConfigName(t *testing.T) {
 
 func TestInvalidSourcePathProvided(t *testing.T) {
 	testCfg := &Configuration{
-		SourceDir: "wrong_source_dir",
+		sourceDir: "wrong_source_dir",
 	}
 	cfgData, err := toml.Marshal(testCfg)
 	if err != nil {
@@ -32,22 +33,22 @@ func TestInvalidSourcePathProvided(t *testing.T) {
 	}
 
 	dir := "test"
-	absDir, err := absolutePath(dir)
+	absDir, err := utils.AbsolutePath(dir)
 	if err != nil {
 		t.Error(err)
 	}
-	err = createDir(absDir)
-	defer deletePath(absDir)
+	err = utils.CreateDir(absDir)
+	defer utils.DeletePath(absDir)
 	if err != nil {
 		t.Error(err)
 	}
 
 	path := dir + "/test.toml"
-	absPath, err := absolutePath(path)
+	absPath, err := utils.AbsolutePath(path)
 	if err != nil {
 		t.Error(err)
 	}
-	if _, err = createFile(absPath, cfgData); err != nil {
+	if _, err = utils.CreateFile(absPath, cfgData); err != nil {
 		t.Error(err)
 	}
 	if _, err = ParsedConfiguration(absPath); err == nil {
@@ -66,15 +67,15 @@ func TestConfigMerge(t *testing.T) {
 	}
 
 	path := "test.toml"
-	absPath, err := absolutePath(path)
+	absPath, err := utils.AbsolutePath(path)
 	if err != nil {
 		t.Error(err)
 	}
-	if _, err := createFile(absPath, testCfgData); err != nil {
+	if _, err := utils.CreateFile(absPath, testCfgData); err != nil {
 		t.Error(err)
 	}
 
-	defer deletePath(absPath)
+	defer utils.DeletePath(absPath)
 
 	cfg, err := ParsedConfiguration(absPath)
 	if err != nil {

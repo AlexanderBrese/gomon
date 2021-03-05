@@ -1,6 +1,7 @@
-package main
+package configuration
 
 import (
+	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
 	"github.com/imdario/mergo"
 	"github.com/pelletier/go-toml"
 )
@@ -8,15 +9,15 @@ import (
 // ParsedConfiguration parses a configuration file and merges it with the default configuration
 func ParsedConfiguration(path string) (*Configuration, error) {
 	if path == "" {
-		return defaultConfiguration, nil
-	} else if err := checkPath(path); err != nil {
+		return DefaultConfiguration(), nil
+	} else if err := utils.CheckPath(path); err != nil {
 		return nil, err
 	} else {
-		cfg, err := _parse(path)
+		cfg, err := parse(path)
 		if err != nil {
 			return nil, err
 		}
-		err = _merge(cfg)
+		err = merge(cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -24,35 +25,35 @@ func ParsedConfiguration(path string) (*Configuration, error) {
 	}
 }
 
-func _parse(path string) (cfg *Configuration, err error) {
-	cfgData, err := readFile(path)
+func parse(path string) (cfg *Configuration, err error) {
+	cfgData, err := utils.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	cfg, err = _unmarshal(cfgData)
+	cfg, err = unmarshal(cfgData)
 	if err != nil {
 		return nil, err
 	}
-	err = _validate(cfg)
+	err = validate(cfg)
 	if err != nil {
 		return nil, err
 	}
 	return cfg, err
 }
 
-func _validate(cfg *Configuration) error {
-	absPath, err := absolutePath(cfg.SourceDir)
+func validate(cfg *Configuration) error {
+	absPath, err := utils.AbsolutePath(cfg.sourceDir)
 	if err != nil {
 		return err
 	}
-	return checkPath(absPath)
+	return utils.CheckPath(absPath)
 }
 
-func _merge(cfg *Configuration) error {
-	return mergo.Merge(cfg, defaultConfiguration)
+func merge(cfg *Configuration) error {
+	return mergo.Merge(cfg, DefaultConfiguration)
 }
 
-func _unmarshal(cfgData []byte) (*Configuration, error) {
+func unmarshal(cfgData []byte) (*Configuration, error) {
 	cfg := new(Configuration)
 	if err := toml.Unmarshal(cfgData, cfg); err != nil {
 		return nil, err
