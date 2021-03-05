@@ -71,11 +71,10 @@ func (w *FileChanges) StopWatching() {
 
 func (w *FileChanges) control() {
 	for {
-		var filePath string
 		select {
 		case <-w.stopWatchingChan:
 			return
-		case filePath = <-w.watchedFilesChan:
+		case filePath := <-w.watchedFilesChan:
 			relPath, err := utils.RelPath(w.config.Root, filePath)
 			if err != nil {
 				log.Print(err)
@@ -92,9 +91,11 @@ func (w *FileChanges) cleanup() error {
 	if err := w.closeWatcher(); err != nil {
 		return err
 	}
+	/* TODO: implement
 	if err := w.removeBuildDir(); err != nil {
 		return err
 	}
+	*/
 
 	return nil
 }
@@ -109,10 +110,6 @@ func (w *FileChanges) stopWatchingDirs() {
 
 func (w *FileChanges) closeWatcher() error {
 	return w.watcher.Close()
-}
-
-func (w *FileChanges) closeSubscription() {
-	close(w.watchedFilesSubscriberChan)
 }
 
 func (w *FileChanges) removeBuildDir() error {
@@ -134,8 +131,8 @@ func (w *FileChanges) flushWatchedFiles() {
 	}
 }
 
-func (w *FileChanges) watch(path string) error {
-	return filepath.WalkDir(path, func(path string, d os.DirEntry, err error) error {
+func (w *FileChanges) watch(rootPath string) error {
+	return filepath.WalkDir(rootPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -149,40 +146,13 @@ func (w *FileChanges) watch(path string) error {
 			if err := w.addWatch(path); err != nil {
 				return err
 			}
-			if err = w.updateFileChecksums(path); err != nil {
-				return err
-			}
-			go w.watchDir(path)
+			go w.watchDir()
 		}
 		return nil
 	})
 }
 
-func (w *FileChanges) updateFileChecksums(path string) error {
-	skipFirst := true
-	return filepath.WalkDir(path, func(path string, d os.DirEntry, err error) error {
-		if skipFirst {
-			skipFirst = false
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return filepath.SkipDir
-		}
-
-		if w.isExcludedFile(path) {
-			return nil
-		}
-
-		w.watchedFileChecksums.UpdateFileChecksum(path)
-
-		return nil
-	})
-}
-
-func (w *FileChanges) watchDir(path string) error {
+func (w *FileChanges) watchDir() error {
 	utils.WithLock(&w.mu, func() {
 		w.watchedDirs++
 	})
@@ -191,42 +161,60 @@ func (w *FileChanges) watchDir(path string) error {
 			w.watchedDirs--
 		})
 	}()
-
 	for {
 		select {
 		case <-w.stopWatcherChan:
 			return nil
 		case ev := <-w.watcher.Events:
-			if !isValidWatchEvent(ev) {
+			path := ev.Name
+			isDir, err := utils.IsDir(path)
+			if err != nil {
+				log.Printf("error: during file watch: %s", err)
 				break
 			}
-			filePath := ev.Name
-			isDir, err := utils.IsDir(filePath)
-			if err != nil {
-				log.Print(err)
-			} else if isDir {
-				// Directory was removed
-				if isWatchRemoveEvent(ev) {
-					if err := w.removeWatch(filePath); err != nil {
-						log.Printf("error: failed to stop watching %s: %s", filePath, err)
+			if isDir && w.isExcludedDir(path) {
+				if isWriteEvent(ev) {
+					w.watchedFilesSubscriberChan <- ""
+				}
+
+				break
+			}
+
+			if !isValidEvent(ev, isDir) {
+				break
+			}
+
+			if isDir {
+				if isRemoveEvent(ev) {
+					if err := w.removeWatch(path); err != nil {
+						log.Printf("error: during file watch: %s", err)
 					}
 					break
 				}
-				// Watch recursively
-				w.watch(filePath)
+				w.watch(path)
+				break
+			} else if isRemoveEvent(ev) {
 				break
 			}
-			hasNotChanged, err := w.hasNotChanged(filePath)
+
+			hasNotChanged, err := w.hasNotChanged(path)
 			if err != nil {
-				log.Print(err)
+				log.Printf("error: during file watch: %s", err)
 			}
-			if w.isExcludedFile(filePath) || hasNotChanged {
+			if !hasNotChanged {
+				w.watchedFileChecksums.UpdateFileChecksum(path)
+			}
+			if w.isExcludedFile(path) || hasNotChanged {
+				w.watchedFilesSubscriberChan <- ""
 				break
 			}
-			w.watchedFilesChan <- filePath
-			w.watchedFilesSubscriberChan <- filePath
+
+			w.watchedFilesChan <- path
+			w.watchedFilesSubscriberChan <- path
 		case err := <-w.watcher.Errors:
-			log.Printf("error: during file watch at %s: %s", path, err)
+			if err != nil {
+				log.Printf("error: during file watch: %s", err)
+			}
 		}
 	}
 }
@@ -273,7 +261,12 @@ func (w *FileChanges) isIgnoredDir(path string) bool {
 
 func (w *FileChanges) isWatchedDir(path string) bool {
 	iDirs := w.config.WatchDirs
-	if len(iDirs) == 0 {
+
+	relPath, err := utils.RelPath(w.config.Root, path)
+	if err != nil {
+		return false
+	}
+	if len(iDirs) == 0 || relPath == "." {
 		return true
 	}
 
@@ -344,11 +337,18 @@ func (w *FileChanges) removeWatch(path string) error {
 	return w.watcher.Remove(path)
 }
 
-func isValidWatchEvent(ev fsnotify.Event) bool {
-	return ev.Op&fsnotify.Write == fsnotify.Write ||
-		ev.Op&fsnotify.Remove == fsnotify.Remove
+func isValidEvent(ev fsnotify.Event, isDir bool) bool {
+	if isDir {
+		return ev.Op&fsnotify.Create == fsnotify.Create ||
+			ev.Op&fsnotify.Remove == fsnotify.Remove
+	}
+	return ev.Op&fsnotify.Write == fsnotify.Write
 }
 
-func isWatchRemoveEvent(ev fsnotify.Event) bool {
+func isWriteEvent(ev fsnotify.Event) bool {
+	return ev.Op&fsnotify.Write == fsnotify.Write
+}
+
+func isRemoveEvent(ev fsnotify.Event) bool {
 	return ev.Op&fsnotify.Remove == fsnotify.Remove
 }
