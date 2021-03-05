@@ -14,6 +14,9 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+const watchedFilesLimit = 1000
+const watchedDirsLimit = 10
+
 type FileChanges struct {
 	config *configuration.Configuration
 
@@ -24,7 +27,8 @@ type FileChanges struct {
 	stopWatchingChan           chan bool
 	watchedFilesChan           chan string
 
-	watchedDirs uint
+	watchedDirs     uint
+	watchedDirPaths []string
 
 	watchedFileChecksums *utils.FileChecksums
 
@@ -40,10 +44,11 @@ func NewFileChanges(cfg *configuration.Configuration) (*FileChanges, error) {
 	w := &FileChanges{
 		config:           cfg,
 		watcher:          watcher,
-		watchedFilesChan: make(chan string, 1000),
-		stopWatcherChan:  make(chan bool, 10),
+		watchedFilesChan: make(chan string, watchedFilesLimit),
+		stopWatcherChan:  make(chan bool, watchedDirsLimit),
 		stopWatchingChan: make(chan bool),
 		watchedDirs:      0,
+		watchedDirPaths:  make([]string, watchedDirsLimit),
 	}
 
 	w.watchedFileChecksums = utils.NewFileChecksums()
@@ -143,6 +148,11 @@ func (w *FileChanges) watch(rootPath string) error {
 			return filepath.SkipDir
 		}
 		if w.isWatchedDir(path) {
+			if !utils.Contains(w.watchedDirPaths, path) {
+				w.watchedDirPaths[utils.Size(w.watchedDirPaths)] = path
+			} else {
+				return nil
+			}
 			if err := w.addWatch(path); err != nil {
 				return err
 			}
@@ -166,13 +176,13 @@ func (w *FileChanges) watchDir() error {
 		case <-w.stopWatcherChan:
 			return nil
 		case ev := <-w.watcher.Events:
-			path := ev.Name
-			isDir, err := utils.IsDir(path)
+			watchedPath := ev.Name
+			isDir, err := utils.IsDir(watchedPath)
 			if err != nil {
 				log.Printf("error: during file watch: %s", err)
 				break
 			}
-			if isDir && w.isExcludedDir(path) {
+			if isDir && w.isExcludedDir(watchedPath) {
 				if isWriteEvent(ev) {
 					w.watchedFilesSubscriberChan <- ""
 				}
@@ -186,31 +196,32 @@ func (w *FileChanges) watchDir() error {
 
 			if isDir {
 				if isRemoveEvent(ev) {
-					if err := w.removeWatch(path); err != nil {
+					if err := w.removeWatch(watchedPath); err != nil {
 						log.Printf("error: during file watch: %s", err)
 					}
 					break
 				}
-				w.watch(path)
+				w.watch(watchedPath)
+
 				break
 			} else if isRemoveEvent(ev) {
 				break
 			}
 
-			hasNotChanged, err := w.hasNotChanged(path)
+			hasNotChanged, err := w.hasNotChanged(watchedPath)
 			if err != nil {
 				log.Printf("error: during file watch: %s", err)
 			}
 			if !hasNotChanged {
-				w.watchedFileChecksums.UpdateFileChecksum(path)
+				w.watchedFileChecksums.UpdateFileChecksum(watchedPath)
 			}
-			if w.isExcludedFile(path) || hasNotChanged {
+			if w.isExcludedFile(watchedPath) || hasNotChanged {
 				w.watchedFilesSubscriberChan <- ""
 				break
 			}
 
-			w.watchedFilesChan <- path
-			w.watchedFilesSubscriberChan <- path
+			w.watchedFilesChan <- watchedPath
+			w.watchedFilesSubscriberChan <- watchedPath
 		case err := <-w.watcher.Errors:
 			if err != nil {
 				log.Printf("error: during file watch: %s", err)
