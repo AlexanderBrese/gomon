@@ -45,6 +45,13 @@ func DefaultConfiguration() *Configuration {
 	}
 }
 
+func TestConfiguration() *Configuration {
+	cfg := DefaultConfiguration()
+	cfg.WatchExts = []string{}
+	cfg.IgnoreDirs = []string{}
+	return cfg
+}
+
 func (c *Configuration) Delay() time.Duration {
 	return time.Duration(c.delay) * time.Millisecond
 }
