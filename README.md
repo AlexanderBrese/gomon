@@ -69,15 +69,15 @@ relative_log_dir = "tmp/go-server-browser-reload.log"
 # The port used for the browser syncing server
 port = 3000
 # Watch these extensions for changes
-watch_relative_ext = ["go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"]
+include_relative_ext = ["go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"]
 # Watch these directories for changes
-watch_relative_dir = []
+include_relative_dir = []
 # Ignore these files
-ignore_relative_files = []
+exclude_relative_files = []
 # Ignore these directories
-ignore_relative_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
+exclude_relative_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
 # Buffer changes before rebuilding for a certain amount of time (ms)
-delay = 1000
+buffer_time = 1000
 ```
 
 # What features is it going to provide?

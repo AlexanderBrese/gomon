@@ -21,11 +21,11 @@ type Configuration struct {
 	sourceDir   string   `toml:"relative_source_dir"`
 	buildDir    string   `toml:"relative_build_dir"`
 	logDir      string   `toml:"relative_log_dir"`
-	WatchExts   []string `toml:"watch_relative_ext"`
-	IgnoreDirs  []string `toml:"ignore_relative_dir"`
-	WatchDirs   []string `toml:"watch_relative_dir"`
+	IncludeExts []string `toml:"watch_relative_ext"`
+	ExcludeDirs []string `toml:"ignore_relative_dir"`
+	IncludeDirs []string `toml:"watch_relative_dir"`
 	IgnoreFiles []string `toml:"ignore_relative_files"`
-	delay       int      `toml:"delay"`
+	bufferTime  int      `toml:"delay"`
 	Port        int      `toml:"port"`
 	Root        string
 }
@@ -35,11 +35,11 @@ func DefaultConfiguration() *Configuration {
 		sourceDir:   "cmd/web",
 		buildDir:    "tmp",
 		logDir:      "tmp",
-		WatchExts:   []string{"go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"},
-		IgnoreDirs:  []string{"assets", "tmp", "vendor", "node_modules", "build"},
-		WatchDirs:   []string{},
+		IncludeExts: []string{"go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"},
+		ExcludeDirs: []string{"assets", "tmp", "vendor", "node_modules", "build"},
+		IncludeDirs: []string{},
 		IgnoreFiles: []string{},
-		delay:       1000,
+		bufferTime:  1000,
 		Port:        3000,
 		Root:        root,
 	}
@@ -47,13 +47,13 @@ func DefaultConfiguration() *Configuration {
 
 func TestConfiguration() *Configuration {
 	cfg := DefaultConfiguration()
-	cfg.WatchExts = []string{}
-	cfg.IgnoreDirs = []string{}
+	cfg.IncludeExts = []string{}
+	cfg.ExcludeDirs = []string{}
 	return cfg
 }
 
-func (c *Configuration) Delay() time.Duration {
-	return time.Duration(c.delay) * time.Millisecond
+func (c *Configuration) BufferTime() time.Duration {
+	return time.Duration(c.bufferTime) * time.Millisecond
 }
 
 func (c *Configuration) SrcDir() (string, error) {

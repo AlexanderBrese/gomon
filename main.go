@@ -44,7 +44,7 @@ func main() {
 		fileChanges.StopWatching()
 	}()
 
-	if err := fileChanges.Watch(); err != nil {
+	if err := fileChanges.Surveil(); err != nil {
 		log.Fatal(err)
 	}
 
