@@ -16,28 +16,28 @@ const TEMP_FILE_CONTENT = "test"
 
 func TestFileChanges(t *testing.T) {
 	defaultCfg := configuration.DefaultConfiguration()
-	customExtsCfg := configuration.TestConfiguration()
-	customExtsCfg.IncludeExts = []string{"custom"}
-	customIgnoredDirCfg := configuration.TestConfiguration()
-	customIgnoredDirCfg.ExcludeDirs = []string{"ignored"}
-	customIgnoredDirCfg.IncludeExts = []string{"go"}
-	customIgnoredFileCfg := configuration.TestConfiguration()
-	customIgnoredFileCfg.IgnoreFiles = []string{"ignored.go"}
-	customIgnoredFileCfg.IncludeExts = []string{"go"}
-	customIncludeDirCfg := configuration.TestConfiguration()
-	customIncludeDirCfg.IncludeDirs = []string{"watched"}
-	customIncludeDirCfg.IncludeExts = []string{"go"}
-	customIgnoredAndIncludedDirCfg := configuration.TestConfiguration()
-	customIgnoredAndIncludedDirCfg.ExcludeDirs = []string{"watched"}
-	customIgnoredAndIncludedDirCfg.IncludeDirs = []string{"watched"}
-	customIgnoredAndIncludedDirCfg.IncludeExts = []string{"go"}
-	customIgnoredFileAndWatchedDirCfg := configuration.TestConfiguration()
-	customIgnoredFileAndWatchedDirCfg.IncludeDirs = []string{"watched"}
-	customIgnoredFileAndWatchedDirCfg.IgnoreFiles = []string{"watched/ignored.go"}
-	customIgnoredFileAndWatchedDirCfg.IncludeExts = []string{"go"}
-	customWatchedDirAndWatchedExt := configuration.TestConfiguration()
-	customWatchedDirAndWatchedExt.IncludeDirs = []string{"watched"}
-	customWatchedDirAndWatchedExt.IncludeExts = []string{"go"}
+	customExtsCfg, _ := configuration.TestConfiguration()
+	customExtsCfg.IncludeExts = append(customExtsCfg.IncludeExts, "custom")
+	customIgnoredDirCfg, _ := configuration.TestConfiguration()
+	customIgnoredDirCfg.ExcludeDirs = append(customIgnoredDirCfg.ExcludeDirs, "ignored")
+	customIgnoredDirCfg.IncludeExts = append(customIgnoredDirCfg.IncludeExts, "go")
+	customIgnoredFileCfg, _ := configuration.TestConfiguration()
+	customIgnoredFileCfg.IgnoreFiles = append(customIgnoredFileCfg.IgnoreFiles, "ignored.go")
+	customIgnoredFileCfg.IncludeExts = append(customIgnoredFileCfg.IncludeExts, "go")
+	customIncludeDirCfg, _ := configuration.TestConfiguration()
+	customIncludeDirCfg.IncludeDirs = append(customIncludeDirCfg.IncludeDirs, "watched")
+	customIncludeDirCfg.IncludeExts = append(customIncludeDirCfg.IncludeExts, "go")
+	customIgnoredAndIncludedDirCfg, _ := configuration.TestConfiguration()
+	customIgnoredAndIncludedDirCfg.ExcludeDirs = append(customIgnoredAndIncludedDirCfg.ExcludeDirs, "watched")
+	customIgnoredAndIncludedDirCfg.IncludeDirs = append(customIgnoredAndIncludedDirCfg.IncludeDirs, "watched")
+	customIgnoredAndIncludedDirCfg.IncludeExts = append(customIgnoredAndIncludedDirCfg.IncludeExts, "go")
+	customIgnoredFileAndWatchedDirCfg, _ := configuration.TestConfiguration()
+	customIgnoredFileAndWatchedDirCfg.IncludeDirs = append(customIgnoredFileAndWatchedDirCfg.IncludeDirs, "watched")
+	customIgnoredFileAndWatchedDirCfg.IgnoreFiles = append(customIgnoredFileAndWatchedDirCfg.IgnoreFiles, "watched/ignored.go")
+	customIgnoredFileAndWatchedDirCfg.IncludeExts = append(customIgnoredFileAndWatchedDirCfg.IncludeExts, "go")
+	customWatchedDirAndWatchedExt, _ := configuration.TestConfiguration()
+	customWatchedDirAndWatchedExt.IncludeDirs = append(customWatchedDirAndWatchedExt.IncludeDirs, "watched")
+	customWatchedDirAndWatchedExt.IncludeExts = append(customWatchedDirAndWatchedExt.IncludeExts, "go")
 
 	tests := []struct {
 		name             string
@@ -45,6 +45,7 @@ func TestFileChanges(t *testing.T) {
 		relPath          string
 		shouldBeDetected bool
 	}{
+		{"Files in an ignored folder should not be detected.", customIgnoredDirCfg, "ignored/test.go", false},
 		{"An ignored file inside a watched directory should not be detected.", customIgnoredFileAndWatchedDirCfg, "watched/ignored.go", false},
 		{"A file with a valid extension should be detected.", defaultCfg, "test.go", true},
 
@@ -52,7 +53,6 @@ func TestFileChanges(t *testing.T) {
 		{"A file with an invalid extension inside a watched directory should not be detected.", customWatchedDirAndWatchedExt, "watched/test.custom", false},
 
 		{"Files outside the ignored folder should be detected.", customIgnoredDirCfg, "test.go", true},
-		{"Files in an ignored folder should not be detected.", customIgnoredDirCfg, "ignored/test.go", false},
 
 		{"A file with a valid custom extension should be detected.", customExtsCfg, "test.custom", true},
 		{"A file with an invalid custom extension should not be detected.", customExtsCfg, "test.go", false},
@@ -120,7 +120,7 @@ func watch(fileChanges *FileChanges) error {
 }
 
 func delete(changedFile string) error {
-	return utils.DeletePath(changedFile)
+	return utils.RemoveDir(changedFile)
 }
 
 func change(relChangedFile string, changedFile string) error {
