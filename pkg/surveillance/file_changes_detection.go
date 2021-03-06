@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AlexanderBrese/go-server-browser-reload/pkg/browsersync"
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/reload"
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
@@ -20,6 +21,7 @@ type FileChangesDetection struct {
 	reloader     *reload.Reload
 	mu           sync.Mutex
 	stopWatching chan bool
+	syncServer   *browsersync.Server
 
 	watchedFilesSubscription chan string
 	watchedFiles             chan string
@@ -37,8 +39,10 @@ func NewFileChangesDetection(cfg *configuration.Configuration) (*FileChangesDete
 	}
 
 	w := &FileChangesDetection{
-		config:  cfg,
-		watcher: watcher,
+		config:     cfg,
+		watcher:    watcher,
+		reloader:   reload.NewReload(cfg),
+		syncServer: browsersync.NewServer(),
 
 		watchedFiles:         make(chan string, MAX_WATCHED_FILES),
 		stopWatching:         make(chan bool),
@@ -47,7 +51,6 @@ func NewFileChangesDetection(cfg *configuration.Configuration) (*FileChangesDete
 		unwatchDirs:     make(chan bool, MAX_WATCHED_DIRS),
 		watchedDirCount: 0,
 		watchedDirPaths: make([]string, MAX_WATCHED_DIRS),
-		reloader:        reload.NewReload(cfg),
 	}
 
 	return w, nil
@@ -61,7 +64,7 @@ func (w *FileChangesDetection) Init() error {
 	if err := w.checkRunEnvironment(); err != nil {
 		return err
 	}
-
+	w.syncServer.Start(w.config.Port)
 	return w.watchDir(w.config.Root)
 }
 
@@ -100,6 +103,8 @@ func (w *FileChangesDetection) control() error {
 		}
 
 		w.reload()
+		<-w.reloader.FinishedRunning
+		w.syncServer.Sync()
 	}
 }
 
