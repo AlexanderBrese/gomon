@@ -9,25 +9,23 @@ import (
 type Reload struct {
 	config *configuration.Configuration
 
-	running       bool
-	startBuilding chan bool
-	stop          chan bool
-	stopRunning   chan bool
-	mu            sync.Mutex
+	running         bool
+	startBuilding   chan bool
+	stop            chan bool
+	stopRunning     chan bool
+	FinishedRunning chan bool
+	mu              sync.Mutex
 }
 
 func NewReload(cfg *configuration.Configuration) *Reload {
 	return &Reload{
-		config:        cfg,
-		running:       false,
-		startBuilding: make(chan bool, 1),
-		stop:          make(chan bool, 1),
-		stopRunning:   make(chan bool),
+		config:          cfg,
+		running:         false,
+		startBuilding:   make(chan bool, 1),
+		stop:            make(chan bool, 1),
+		stopRunning:     make(chan bool),
+		FinishedRunning: make(chan bool, 1),
 	}
-}
-
-func (r *Reload) Configuration() *configuration.Configuration {
-	return r.config
 }
 
 func (r *Reload) Cleanup() {

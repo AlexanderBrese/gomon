@@ -22,6 +22,7 @@ func (r *Reload) run() error {
 	}
 	utils.WithLock(&r.mu, func() {
 		r.running = true
+		r.FinishedRunning <- true
 	})
 
 	go func() {

@@ -44,7 +44,7 @@ func runStart(reloader *Reload) error {
 }
 
 func runPassed(reloader *Reload) error {
-	binary, err := reloader.Configuration().Binary()
+	binary, err := reloader.config.Binary()
 	if err != nil {
 		return err
 	}
