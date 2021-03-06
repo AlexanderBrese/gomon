@@ -5,7 +5,7 @@ Because it also reloads the `browser` upon change.
 # How does it work?
 
 Plain: Watches for code changes, reloads the specified binary e.g. a webserver and calls the client through a websocket to reload.<br><br>
-![how-does-it-work](https://github.com/AlexanderBrese/go-server-browser-reload/blob/main/go-server-browser-reload.png)
+![how-does-it-work](https://github.com/AlexanderBrese/GOATmon/blob/main/GOATmon.png)
 
 # Usage
 
@@ -42,30 +42,34 @@ try {
 }
 ```
 
-## install go-server-browser-reload
+## install GOATmon
 
 ```
-go get -u github.com/AlexanderBrese/go-server-browser-reload
+go get -u github.com/AlexanderBrese/GOATmon
 ```
 
-## run go-server-browser-reload 
+## run GOATmon 
 
 If you want to configure the reload behavior or set change paths then just provide a `configuration` to the process.
 
 ```
-go-server-browser-reload [-c PATH_TO_YOUR_CONFIG]
+GOATmon [-c PATH_TO_YOUR_CONFIG]
 ```
 
-## configure go-server-browser-reload
+## configure GOATmon
 
 `Default` configuration:
 ```toml
+# What should the build be named?
+build_name = "main"
+# What should the log be named?
+log_name = "GOATmon.log"
 # What should we built from?
 relative_source_dir = "cmd/web"
 # Where should the build be stored?
 relative_build_dir = "tmp/build"
 # Where should the log be stored?
-relative_log_dir = "tmp/go-server-browser-reload.log"
+relative_log_dir = "tmp/GOATmon.log"
 # The port used for the browser syncing server
 port = 3000
 # Watch these extensions for changes
