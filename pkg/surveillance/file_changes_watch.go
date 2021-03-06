@@ -21,7 +21,11 @@ func (w *FileChangesDetection) watchInsideDir(path string, d os.DirEntry, err er
 	if !d.IsDir() {
 		return nil
 	}
-	if w.isExcludedDir(path) {
+	isExcluded, err := w.isExcludedDir(path)
+	if err != nil {
+		return err
+	}
+	if isExcluded {
 		return filepath.SkipDir
 	}
 	if w.isIncludedDir(path) {
@@ -39,8 +43,13 @@ func (w *FileChangesDetection) watchInsideDir(path string, d os.DirEntry, err er
 	return nil
 }
 
-func (w *FileChangesDetection) isExcludedDir(path string) bool {
-	return w.isBuildDir(path) || w.isLogDir(path) || w.isHiddenDir(path) || w.isIgnoredDir(path)
+func (w *FileChangesDetection) isExcludedDir(path string) (bool, error) {
+	isIgnored, err := w.isIgnoredDir(path)
+	if err != nil {
+		return false, err
+	}
+	isExcluded := w.isBuildDir(path) || w.isLogDir(path) || w.isHiddenDir(path) || isIgnored
+	return isExcluded, nil
 }
 
 func (w *FileChangesDetection) isIncludedDir(dir string) bool {
@@ -170,7 +179,11 @@ func (w *FileChangesDetection) notifyFileChange(changedFile string) {
 
 func (w *FileChangesDetection) onDirChange(changeEvent fsnotify.Event) error {
 	dir := changeEvent.Name
-	if w.isExcludedDir(dir) {
+	isExcluded, err := w.isExcludedDir(dir)
+	if err != nil {
+		return err
+	}
+	if isExcluded {
 		if isWrite(changeEvent) {
 			select {
 			case <-w.watchedFilesSubscription:
@@ -223,18 +236,20 @@ func (w *FileChangesDetection) isHiddenDir(path string) bool {
 	return len(path) > 1 && strings.HasPrefix(filepath.Base(path), ".")
 }
 
-func (w *FileChangesDetection) isIgnoredDir(path string) bool {
-	for _, d := range w.config.ExcludeDirs {
-		absIgnoredDirPath, err := utils.AbsolutePath(d)
-		if err != nil {
-			log.Printf("error: failed to get absolute path for %s: %s", d, err)
-			return false
-		}
-		if path == absIgnoredDirPath {
-			return true
+func (w *FileChangesDetection) isIgnoredDir(path string) (bool, error) {
+	relPath, err := utils.RelPath(w.config.Root, path)
+	if err != nil {
+		return false, err
+	}
+
+	rootParent := strings.Split(relPath, "/")[0]
+	for _, ignoredDir := range w.config.ExcludeDirs {
+		if rootParent == ignoredDir {
+			return true, nil
 		}
 	}
-	return false
+
+	return false, nil
 }
 
 func (w *FileChangesDetection) isExcludedFile(path string) bool {
