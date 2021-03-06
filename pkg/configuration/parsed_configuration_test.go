@@ -25,7 +25,7 @@ func TestWrongConfigName(t *testing.T) {
 
 func TestInvalidSourcePathProvided(t *testing.T) {
 	testCfg := &Configuration{
-		sourceDir: "wrong_source_dir",
+		RelSrcDir: "wrong_source_dir",
 	}
 	cfgData, err := toml.Marshal(testCfg)
 	if err != nil {

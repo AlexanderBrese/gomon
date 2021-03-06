@@ -48,7 +48,7 @@ func parse(path string) (cfg *Configuration, err error) {
 }
 
 func validate(cfg *Configuration) error {
-	absPath, err := utils.AbsolutePath(cfg.sourceDir)
+	absPath, err := utils.AbsolutePath(cfg.RelSrcDir)
 	if err != nil {
 		return err
 	}
@@ -56,22 +56,20 @@ func validate(cfg *Configuration) error {
 }
 
 func merge(cfg *Configuration) error {
-	return mergo.Merge(cfg, DefaultConfiguration)
+	return mergo.Merge(cfg, DefaultConfiguration())
 }
 
 func adapt(cfg *Configuration) error {
 	if runtime.GOOS == PlatformWindows {
 		extName := ".exe"
-		if !strings.HasSuffix(cfg.buildName, extName) {
-			cfg.buildName += extName
+		if !strings.HasSuffix(cfg.BuildName, extName) {
+			cfg.BuildName += extName
 		}
-		cmdName := "start"
 		binary, err := cfg.Binary()
 		if err != nil {
 			return err
 		}
-
-		cfg.executionCommand = cmdName + " /b " + binary
+		cfg.ExecutionCommand = binary
 	}
 	return nil
 }

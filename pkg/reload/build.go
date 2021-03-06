@@ -6,8 +6,6 @@ import (
 	"os"
 )
 
-const GO_BUILD_CMD = "go build -o"
-
 func (r *Reload) BuildCleanup() {
 	select {
 	case <-r.startBuilding:
@@ -25,7 +23,7 @@ func (r *Reload) build() error {
 	if err != nil {
 		return err
 	}
-	buildCmd := fmt.Sprintf("%s %s %s", GO_BUILD_CMD, binary, srcDir)
+	buildCmd := fmt.Sprintf("%s %s %s", r.config.BuildCommand, binary, srcDir)
 	cmd, stdout, stderr, err := r.startCmd(buildCmd)
 	if err != nil {
 		return err

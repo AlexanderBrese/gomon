@@ -61,5 +61,5 @@ func buildPassed(cfg *configuration.Configuration) error {
 func buildCleanup(reloader *Reload) error {
 	reloader.BuildCleanup()
 	cfg := reloader.Configuration()
-	return utils.CleanupBuild(cfg.RelSrcDir(), cfg.RelBuildDir())
+	return utils.CleanupBuild(cfg.RelSrcDir, cfg.RelBuildDir)
 }

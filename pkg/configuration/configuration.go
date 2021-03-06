@@ -19,11 +19,11 @@ func init() {
 
 // Configuration is a in-memory representation of the expected configuration file
 type Configuration struct {
-	buildName        string   `toml:"build_name"`
-	logName          string   `toml:"log_name"`
-	sourceDir        string   `toml:"relative_source_dir"`
-	buildDir         string   `toml:"relative_build_dir"`
-	logDir           string   `toml:"relative_log_dir"`
+	BuildName        string   `toml:"build_name"`
+	LogName          string   `toml:"log_name"`
+	RelSrcDir        string   `toml:"relative_source_dir"`
+	RelBuildDir      string   `toml:"relative_build_dir"`
+	RelLogDir        string   `toml:"relative_log_dir"`
 	IncludeExts      []string `toml:"watch_relative_ext"`
 	ExcludeDirs      []string `toml:"ignore_relative_dir"`
 	IncludeDirs      []string `toml:"watch_relative_dir"`
@@ -31,24 +31,26 @@ type Configuration struct {
 	bufferTime       int      `toml:"delay"`
 	Port             int      `toml:"port"`
 	Root             string
-	executionCommand string
+	ExecutionCommand string `toml:"execution_command"`
+	BuildCommand     string `toml:"build_command"`
 }
 
 func DefaultConfiguration() *Configuration {
 	return &Configuration{
-		buildName:        "main",
-		logName:          "GOATmon.log",
-		sourceDir:        "cmd/web",
-		buildDir:         "tmp/build",
-		logDir:           "tmp",
+		BuildName:        "main",
+		LogName:          "GOATmon.log",
+		RelSrcDir:        "cmd/web",
+		RelBuildDir:      "tmp/build",
+		RelLogDir:        "tmp",
 		IncludeExts:      []string{"go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"},
 		ExcludeDirs:      []string{"assets", "tmp", "vendor", "node_modules", "build"},
 		IncludeDirs:      []string{},
 		IgnoreFiles:      []string{},
 		bufferTime:       1000,
-		executionCommand: "",
+		ExecutionCommand: "",
 		Port:             3000,
 		Root:             root,
+		BuildCommand:     "go build -o",
 	}
 }
 
@@ -66,34 +68,22 @@ func (c *Configuration) BufferTime() time.Duration {
 	return time.Duration(c.bufferTime) * time.Millisecond
 }
 
-func (c *Configuration) RelSrcDir() string {
-	return c.sourceDir
-}
-
 func (c *Configuration) SrcDir() (string, error) {
-	return utils.AbsolutePath(c.sourceDir)
+	return utils.AbsolutePath(c.RelSrcDir)
 }
 
 func (c *Configuration) Binary() (string, error) {
-	return utils.AbsolutePath(filepath.Join(c.buildDir, c.buildName))
-}
-
-func (c *Configuration) RelBuildDir() string {
-	return c.buildDir
+	return utils.AbsolutePath(filepath.Join(c.RelBuildDir, c.BuildName))
 }
 
 func (c *Configuration) BuildDir() (string, error) {
-	return utils.AbsolutePath(c.buildDir)
+	return utils.AbsolutePath(c.RelBuildDir)
 }
 
 func (c *Configuration) LogDir() (string, error) {
-	return utils.AbsolutePath(c.logDir)
+	return utils.AbsolutePath(c.RelLogDir)
 }
 
 func (c *Configuration) Log() (string, error) {
-	return utils.AbsolutePath(filepath.Join(c.logDir, c.logName))
-}
-
-func (c *Configuration) ExecutionCommand() string {
-	return c.executionCommand
+	return utils.AbsolutePath(filepath.Join(c.RelLogDir, c.LogName))
 }
