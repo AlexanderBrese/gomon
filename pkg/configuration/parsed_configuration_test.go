@@ -25,7 +25,7 @@ func TestWrongConfigName(t *testing.T) {
 
 func TestInvalidSourcePathProvided(t *testing.T) {
 	testCfg := &Configuration{
-		sourceDir: "wrong_source_dir",
+		RelSrcDir: "wrong_source_dir",
 	}
 	cfgData, err := toml.Marshal(testCfg)
 	if err != nil {
@@ -38,7 +38,7 @@ func TestInvalidSourcePathProvided(t *testing.T) {
 		t.Error(err)
 	}
 	err = utils.CreateDir(absDir)
-	defer utils.DeletePath(absDir)
+	defer utils.RemoveDir(absDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -75,7 +75,7 @@ func TestConfigMerge(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer utils.DeletePath(absPath)
+	defer utils.RemoveDir(absPath)
 
 	cfg, err := ParsedConfiguration(absPath)
 	if err != nil {

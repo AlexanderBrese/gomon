@@ -7,3 +7,13 @@ func WithLock(mu *sync.Mutex, f func()) {
 	f()
 	mu.Unlock()
 }
+
+func WithLockAndError(mu *sync.Mutex, f func() error) error {
+	mu.Lock()
+	if err := f(); err != nil {
+		mu.Unlock()
+		return err
+	}
+	mu.Unlock()
+	return nil
+}

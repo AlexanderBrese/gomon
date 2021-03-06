@@ -1,6 +1,9 @@
 package configuration
 
 import (
+	"runtime"
+	"strings"
+
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
 	"github.com/imdario/mergo"
 	"github.com/pelletier/go-toml"
@@ -19,6 +22,9 @@ func ParsedConfiguration(path string) (*Configuration, error) {
 		}
 		err = merge(cfg)
 		if err != nil {
+			return nil, err
+		}
+		if err := adapt(cfg); err != nil {
 			return nil, err
 		}
 		return cfg, err
@@ -42,7 +48,7 @@ func parse(path string) (cfg *Configuration, err error) {
 }
 
 func validate(cfg *Configuration) error {
-	absPath, err := utils.AbsolutePath(cfg.sourceDir)
+	absPath, err := utils.AbsolutePath(cfg.RelSrcDir)
 	if err != nil {
 		return err
 	}
@@ -50,7 +56,22 @@ func validate(cfg *Configuration) error {
 }
 
 func merge(cfg *Configuration) error {
-	return mergo.Merge(cfg, DefaultConfiguration)
+	return mergo.Merge(cfg, DefaultConfiguration())
+}
+
+func adapt(cfg *Configuration) error {
+	if runtime.GOOS == PlatformWindows {
+		extName := ".exe"
+		if !strings.HasSuffix(cfg.BuildName, extName) {
+			cfg.BuildName += extName
+		}
+		binary, err := cfg.Binary()
+		if err != nil {
+			return err
+		}
+		cfg.ExecutionCommand = binary
+	}
+	return nil
 }
 
 func unmarshal(cfgData []byte) (*Configuration, error) {

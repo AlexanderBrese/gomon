@@ -10,18 +10,22 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-func (w *FileChanges) watchDir(dir string) error {
+func (w *FileChangesDetection) watchDir(dir string) error {
 	return filepath.WalkDir(dir, w.watchInsideDir)
 }
 
-func (w *FileChanges) watchInsideDir(path string, d os.DirEntry, err error) error {
+func (w *FileChangesDetection) watchInsideDir(path string, d os.DirEntry, err error) error {
 	if err != nil {
 		return err
 	}
 	if !d.IsDir() {
 		return nil
 	}
-	if w.isExcludedDir(path) {
+	isExcluded, err := w.isExcludedDir(path)
+	if err != nil {
+		return err
+	}
+	if isExcluded {
 		return filepath.SkipDir
 	}
 	if w.isIncludedDir(path) {
@@ -39,11 +43,16 @@ func (w *FileChanges) watchInsideDir(path string, d os.DirEntry, err error) erro
 	return nil
 }
 
-func (w *FileChanges) isExcludedDir(path string) bool {
-	return w.isBuildDir(path) || w.isLogDir(path) || w.isHiddenDir(path) || w.isIgnoredDir(path)
+func (w *FileChangesDetection) isExcludedDir(path string) (bool, error) {
+	isIgnored, err := w.isIgnoredDir(path)
+	if err != nil {
+		return false, err
+	}
+	isExcluded := w.isBuildDir(path) || w.isLogDir(path) || w.isHiddenDir(path) || isIgnored
+	return isExcluded, nil
 }
 
-func (w *FileChanges) isIncludedDir(dir string) bool {
+func (w *FileChangesDetection) isIncludedDir(dir string) bool {
 	incDirs := w.config.IncludeDirs
 
 	relDir, err := utils.RelPath(w.config.Root, dir)
@@ -73,15 +82,15 @@ func (w *FileChanges) isIncludedDir(dir string) bool {
 	return false
 }
 
-func (w *FileChanges) addWatchedDirPath(path string) {
+func (w *FileChangesDetection) addWatchedDirPath(path string) {
 	w.watchedDirPaths[utils.Size(w.watchedDirPaths)] = path
 }
 
-func (w *FileChanges) addWatchedDir(path string) error {
+func (w *FileChangesDetection) addWatchedDir(path string) error {
 	return w.watcher.Add(path)
 }
 
-func (w *FileChanges) watchNewDir() error {
+func (w *FileChangesDetection) watchNewDir() error {
 	w.increaseWatchedDirCount()
 	defer w.decreaseWatchedDirCount()
 	for {
@@ -98,19 +107,19 @@ func (w *FileChanges) watchNewDir() error {
 	}
 }
 
-func (w *FileChanges) increaseWatchedDirCount() {
+func (w *FileChangesDetection) increaseWatchedDirCount() {
 	utils.WithLock(&w.mu, func() {
 		w.watchedDirCount++
 	})
 }
 
-func (w *FileChanges) decreaseWatchedDirCount() {
+func (w *FileChangesDetection) decreaseWatchedDirCount() {
 	utils.WithLock(&w.mu, func() {
 		w.watchedDirCount--
 	})
 }
 
-func (w *FileChanges) onChange(changeEvent fsnotify.Event) error {
+func (w *FileChangesDetection) onChange(changeEvent fsnotify.Event) error {
 	isDir, err := utils.IsDir(changeEvent.Name)
 	if err != nil {
 		return err
@@ -122,7 +131,7 @@ func (w *FileChanges) onChange(changeEvent fsnotify.Event) error {
 	return w.onFileChange(changeEvent)
 }
 
-func (w *FileChanges) onFileChange(changeEvent fsnotify.Event) error {
+func (w *FileChangesDetection) onFileChange(changeEvent fsnotify.Event) error {
 	file := changeEvent.Name
 	if !isFileChange(changeEvent) || isRemove(changeEvent) {
 		return nil
@@ -151,7 +160,7 @@ func isRemove(ev fsnotify.Event) bool {
 	return ev.Op&fsnotify.Remove == fsnotify.Remove
 }
 
-func (w *FileChanges) hasNotChanged(path string) (bool, error) {
+func (w *FileChangesDetection) hasNotChanged(path string) (bool, error) {
 	hasChanged, err := w.watchedFileChecksums.HasChanged(path)
 	if err != nil {
 		return true, err
@@ -159,20 +168,28 @@ func (w *FileChanges) hasNotChanged(path string) (bool, error) {
 	return !hasChanged, nil
 }
 
-func (w *FileChanges) notifyNoFileChange() {
+func (w *FileChangesDetection) notifyNoFileChange() {
 	w.watchedFilesSubscription <- ""
 }
 
-func (w *FileChanges) notifyFileChange(changedFile string) {
+func (w *FileChangesDetection) notifyFileChange(changedFile string) {
 	w.watchedFiles <- changedFile
 	w.watchedFilesSubscription <- changedFile
 }
 
-func (w *FileChanges) onDirChange(changeEvent fsnotify.Event) error {
+func (w *FileChangesDetection) onDirChange(changeEvent fsnotify.Event) error {
 	dir := changeEvent.Name
-	if w.isExcludedDir(dir) {
+	isExcluded, err := w.isExcludedDir(dir)
+	if err != nil {
+		return err
+	}
+	if isExcluded {
 		if isWrite(changeEvent) {
-			w.notifyNoFileChange()
+			select {
+			case <-w.watchedFilesSubscription:
+			default:
+				w.notifyNoFileChange()
+			}
 		}
 
 		return nil
@@ -193,11 +210,11 @@ func (w *FileChanges) onDirChange(changeEvent fsnotify.Event) error {
 	return nil
 }
 
-func (w *FileChanges) removeWatchedDir(path string) error {
+func (w *FileChangesDetection) removeWatchedDir(path string) error {
 	return w.watcher.Remove(path)
 }
 
-func (w *FileChanges) isBuildDir(path string) bool {
+func (w *FileChangesDetection) isBuildDir(path string) bool {
 	buildDir, err := w.config.BuildDir()
 	if err != nil {
 		log.Printf("error: failed to get build dir: %s", err)
@@ -206,7 +223,7 @@ func (w *FileChanges) isBuildDir(path string) bool {
 	return path == buildDir
 }
 
-func (w *FileChanges) isLogDir(path string) bool {
+func (w *FileChangesDetection) isLogDir(path string) bool {
 	logDir, err := w.config.LogDir()
 	if err != nil {
 		log.Printf("error: failed to get log dir: %s", err)
@@ -215,29 +232,31 @@ func (w *FileChanges) isLogDir(path string) bool {
 	return path == logDir
 }
 
-func (w *FileChanges) isHiddenDir(path string) bool {
+func (w *FileChangesDetection) isHiddenDir(path string) bool {
 	return len(path) > 1 && strings.HasPrefix(filepath.Base(path), ".")
 }
 
-func (w *FileChanges) isIgnoredDir(path string) bool {
-	for _, d := range w.config.ExcludeDirs {
-		absIgnoredDirPath, err := utils.AbsolutePath(d)
-		if err != nil {
-			log.Printf("error: failed to get absolute path for %s: %s", d, err)
-			return false
-		}
-		if path == absIgnoredDirPath {
-			return true
+func (w *FileChangesDetection) isIgnoredDir(path string) (bool, error) {
+	relPath, err := utils.RelPath(w.config.Root, path)
+	if err != nil {
+		return false, err
+	}
+
+	rootParent := strings.Split(relPath, "/")[0]
+	for _, ignoredDir := range w.config.ExcludeDirs {
+		if rootParent == ignoredDir {
+			return true, nil
 		}
 	}
-	return false
+
+	return false, nil
 }
 
-func (w *FileChanges) isExcludedFile(path string) bool {
+func (w *FileChangesDetection) isExcludedFile(path string) bool {
 	return w.isIgnoredFile(path) || w.isIgnoredExt(path)
 }
 
-func (w *FileChanges) isIgnoredFile(path string) bool {
+func (w *FileChangesDetection) isIgnoredFile(path string) bool {
 	for _, f := range w.config.IgnoreFiles {
 		absIgnoredFile, err := utils.AbsolutePath(f)
 		if err != nil {
@@ -252,7 +271,7 @@ func (w *FileChanges) isIgnoredFile(path string) bool {
 	return false
 }
 
-func (w *FileChanges) isIgnoredExt(path string) bool {
+func (w *FileChangesDetection) isIgnoredExt(path string) bool {
 	ext := filepath.Ext(path)
 
 	for _, e := range w.config.IncludeExts {
@@ -273,7 +292,7 @@ func isWrite(ev fsnotify.Event) bool {
 	return ev.Op&fsnotify.Write == fsnotify.Write
 }
 
-func (w *FileChanges) stopWatchingDirs() {
+func (w *FileChangesDetection) stopWatchingDirs() {
 	utils.WithLock(&w.mu, func() {
 		for i := 0; i < int(w.watchedDirCount); i++ {
 			w.unwatchDirs <- true
@@ -281,6 +300,6 @@ func (w *FileChanges) stopWatchingDirs() {
 	})
 }
 
-func (w *FileChanges) close() error {
+func (w *FileChangesDetection) stopWatcher() error {
 	return w.watcher.Close()
 }

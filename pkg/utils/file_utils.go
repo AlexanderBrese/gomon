@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func CheckPath(path string) error {
@@ -52,12 +53,21 @@ func ReadFile(path string) ([]byte, error) {
 }
 
 func CreateDir(path string) error {
-	return os.Mkdir(path, os.ModePerm)
+	return os.MkdirAll(path, os.ModePerm)
 }
 
 func CreateDirIfNotExist(path string) error {
 	if err := CheckPath(path); err != nil {
 		if err = CreateDir(path); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func RemoveFileIfExist(path string) error {
+	if err := CheckPath(path); err != nil {
+		if err = RemoveFile(path); err != nil {
 			return err
 		}
 	}
@@ -93,11 +103,11 @@ func CloseFile(file *os.File) error {
 	return file.Close()
 }
 
-func DeletePath(path string) error {
+func RemoveDir(path string) error {
 	return os.RemoveAll(path)
 }
 
-func DeleteFile(filePath string) error {
+func RemoveFile(filePath string) error {
 	return os.Remove(filePath)
 }
 
@@ -107,4 +117,13 @@ func OpenFile(path string) (*os.File, error) {
 		return nil, err
 	}
 	return f, err
+}
+
+func RemoveRootDir(relPath string) error {
+	relParent := strings.Split(relPath, "/")[0]
+	parent, err := AbsolutePath(relParent)
+	if err != nil {
+		return err
+	}
+	return RemoveDir(parent)
 }
