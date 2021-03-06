@@ -14,7 +14,7 @@ import (
 const MAX_WATCHED_FILES = 1000
 const MAX_WATCHED_DIRS = 10
 
-type FileChanges struct {
+type FileChangesDetection struct {
 	config       *configuration.Configuration
 	watcher      *fsnotify.Watcher
 	reloader     *reload.Reload
@@ -30,13 +30,13 @@ type FileChanges struct {
 	unwatchDirs     chan bool
 }
 
-func NewFileChanges(cfg *configuration.Configuration) (*FileChanges, error) {
+func NewFileChangesDetection(cfg *configuration.Configuration) (*FileChangesDetection, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
 	}
 
-	w := &FileChanges{
+	w := &FileChangesDetection{
 		config:  cfg,
 		watcher: watcher,
 
@@ -53,11 +53,11 @@ func NewFileChanges(cfg *configuration.Configuration) (*FileChanges, error) {
 	return w, nil
 }
 
-func (w *FileChanges) Subscribe(watchedFilesSubscription chan string) {
+func (w *FileChangesDetection) Subscribe(watchedFilesSubscription chan string) {
 	w.watchedFilesSubscription = watchedFilesSubscription
 }
 
-func (w *FileChanges) Init() error {
+func (w *FileChangesDetection) Init() error {
 	if err := w.checkRunEnvironment(); err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (w *FileChanges) Init() error {
 	return w.watchDir(w.config.Root)
 }
 
-func (w *FileChanges) Surveil() error {
+func (w *FileChangesDetection) Surveil() error {
 	if err := w.control(); err != nil {
 		return err
 	}
@@ -73,11 +73,11 @@ func (w *FileChanges) Surveil() error {
 	return w.cleanup()
 }
 
-func (w *FileChanges) StopWatching() {
+func (w *FileChangesDetection) StopWatching() {
 	w.stopWatching <- true
 }
 
-func (w *FileChanges) checkRunEnvironment() error {
+func (w *FileChangesDetection) checkRunEnvironment() error {
 	buildDir, err := w.config.BuildDir()
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func (w *FileChanges) checkRunEnvironment() error {
 	return utils.CreateBuildDir(buildDir)
 }
 
-func (w *FileChanges) control() error {
+func (w *FileChangesDetection) control() error {
 	for {
 		select {
 		case <-w.stopWatching:
@@ -103,20 +103,20 @@ func (w *FileChanges) control() error {
 	}
 }
 
-func (w *FileChanges) reload() {
+func (w *FileChangesDetection) reload() {
 	w.reloader.Reload()
 }
 
-func (w *FileChanges) buffer() {
+func (w *FileChangesDetection) buffer() {
 	w.delay()
 	w.flushWatchedFiles()
 }
 
-func (w *FileChanges) delay() {
+func (w *FileChangesDetection) delay() {
 	time.Sleep(w.config.BufferTime())
 }
 
-func (w *FileChanges) flushWatchedFiles() {
+func (w *FileChangesDetection) flushWatchedFiles() {
 	for {
 		select {
 		case <-w.watchedFiles:
@@ -126,7 +126,7 @@ func (w *FileChanges) flushWatchedFiles() {
 	}
 }
 
-func (w *FileChanges) cleanup() error {
+func (w *FileChangesDetection) cleanup() error {
 	w.stopWatchingDirs()
 
 	if err := w.stopWatcher(); err != nil {

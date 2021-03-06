@@ -14,7 +14,7 @@ import (
 const TEMP_FILE_CREATION_DELAY = 100
 const TEMP_FILE_CONTENT = "test"
 
-func TestFileChanges(t *testing.T) {
+func TestFileChangesDetection(t *testing.T) {
 	defaultCfg := configuration.DefaultConfiguration()
 	customExtsCfg, _ := configuration.TestConfiguration()
 	customExtsCfg.IncludeExts = append(customExtsCfg.IncludeExts, "custom")
@@ -85,7 +85,7 @@ func fileChanges(cfg *configuration.Configuration, relChangedFile string, should
 		defer delete(changedFile)
 	}
 
-	fileChanges, err := NewFileChanges(cfg)
+	fileChanges, err := NewFileChangesDetection(cfg)
 	if err != nil {
 		return err
 	}
@@ -104,13 +104,13 @@ func fileChanges(cfg *configuration.Configuration, relChangedFile string, should
 	return nil
 }
 
-func subscribe(fileChanges *FileChanges) chan string {
+func subscribe(fileChanges *FileChangesDetection) chan string {
 	fileChangesSubscription := make(chan string, 1)
 	fileChanges.Subscribe(fileChangesSubscription)
 	return fileChangesSubscription
 }
 
-func watch(fileChanges *FileChanges) error {
+func watch(fileChanges *FileChangesDetection) error {
 	if err := fileChanges.Init(); err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func createTemporaryFile(path string) error {
 	return nil
 }
 
-func result(fileChangesSubscription chan string, fileChanges *FileChanges, changedFile string, shouldBeDetected bool) error {
+func result(fileChangesSubscription chan string, fileChanges *FileChangesDetection, changedFile string, shouldBeDetected bool) error {
 	for {
 		select {
 		case watchedFile := <-fileChangesSubscription:
@@ -189,7 +189,7 @@ func result(fileChangesSubscription chan string, fileChanges *FileChanges, chang
 	}
 }
 
-func clear(fileChangesSubscription chan string, fileChanges *FileChanges) {
+func clear(fileChangesSubscription chan string, fileChanges *FileChangesDetection) {
 	close(fileChangesSubscription)
 	fileChanges.StopWatching()
 }
