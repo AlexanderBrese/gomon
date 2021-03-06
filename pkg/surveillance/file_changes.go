@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
+	"github.com/AlexanderBrese/go-server-browser-reload/pkg/reload"
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
 	"github.com/fsnotify/fsnotify"
 )
@@ -16,6 +17,7 @@ const MAX_WATCHED_DIRS = 10
 type FileChanges struct {
 	config       *configuration.Configuration
 	watcher      *fsnotify.Watcher
+	reloader     *reload.Reload
 	mu           sync.Mutex
 	stopWatching chan bool
 
@@ -45,6 +47,7 @@ func NewFileChanges(cfg *configuration.Configuration) (*FileChanges, error) {
 		unwatchDirs:     make(chan bool, MAX_WATCHED_DIRS),
 		watchedDirCount: 0,
 		watchedDirPaths: make([]string, MAX_WATCHED_DIRS),
+		reloader:        reload.NewReload(cfg),
 	}
 
 	return w, nil
@@ -55,6 +58,10 @@ func (w *FileChanges) Subscribe(watchedFilesSubscription chan string) {
 }
 
 func (w *FileChanges) Init() error {
+	if err := w.checkRunEnvironment(); err != nil {
+		return err
+	}
+
 	return w.watchDir(w.config.Root)
 }
 
@@ -70,6 +77,14 @@ func (w *FileChanges) StopWatching() {
 	w.stopWatching <- true
 }
 
+func (w *FileChanges) checkRunEnvironment() error {
+	buildDir, err := w.config.BuildDir()
+	if err != nil {
+		return err
+	}
+	return utils.CreateBuildDir(buildDir)
+}
+
 func (w *FileChanges) control() error {
 	for {
 		select {
@@ -83,7 +98,13 @@ func (w *FileChanges) control() error {
 			fmt.Printf("%s has changed\n", relPath)
 			w.buffer()
 		}
+
+		//w.reload()
 	}
+}
+
+func (w *FileChanges) reload() {
+	w.reloader.Reload()
 }
 
 func (w *FileChanges) buffer() {
@@ -108,18 +129,11 @@ func (w *FileChanges) flushWatchedFiles() {
 func (w *FileChanges) cleanup() error {
 	w.stopWatchingDirs()
 
-	if err := w.close(); err != nil {
+	if err := w.stopWatcher(); err != nil {
 		return err
 	}
-	/* TODO: implement
-	if err := w.removeBuildDir(); err != nil {
-		return err
-	}
-	*/
 
-	return nil
-}
+	w.reloader.Cleanup()
 
-func (w *FileChanges) removeBuildDir() error {
-	return w.config.RemoveBuildDir()
+	return utils.RemoveBuildDir(w.config.RelBuildDir())
 }
