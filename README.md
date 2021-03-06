@@ -62,6 +62,10 @@ GOATmon [-c PATH_TO_YOUR_CONFIG]
 ```toml
 # What should the build be named?
 build_name = "main"
+# How should the build be done?
+build_command = "go build -o"
+# How should the build be run?
+execution_command = "./tmp/build/main"
 # What should the log be named?
 log_name = "GOATmon.log"
 # What should we built from?
@@ -73,13 +77,13 @@ relative_log_dir = "tmp/GOATmon.log"
 # The port used for the browser syncing server
 port = 3000
 # Watch these extensions for changes
-include_relative_ext = ["go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"]
+watch_relative_ext = ["go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"]
 # Watch these directories for changes
-include_relative_dir = []
+watch_relative_dir = []
 # Ignore these files
-exclude_relative_files = []
+ignore_relative_files = []
 # Ignore these directories
-exclude_relative_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
+ignore_relative_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
 # Buffer changes before rebuilding for a certain amount of time (ms)
 buffer_time = 1000
 ```
