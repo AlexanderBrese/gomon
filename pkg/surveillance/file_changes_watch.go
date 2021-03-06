@@ -69,12 +69,7 @@ func (w *FileChangesDetection) isIncludedDir(dir string) bool {
 			log.Printf("error: failed to get absolute path for %s: %s", d, err)
 			return false
 		}
-
-		if dir == incDir {
-			return true
-		}
-
-		if strings.HasPrefix(dir, incDir) {
+		if dir == incDir || strings.HasPrefix(dir, incDir) {
 			return true
 		}
 	}
