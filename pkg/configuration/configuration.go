@@ -28,8 +28,8 @@ type Configuration struct {
 	ExcludeDirs      []string `toml:"ignore_relative_dir"`
 	IncludeDirs      []string `toml:"watch_relative_dir"`
 	IgnoreFiles      []string `toml:"ignore_relative_files"`
-	bufferTime       int      `toml:"delay"`
-	Port             int      `toml:"port"`
+	bufferTime       int
+	Port             int `toml:"port"`
 	Root             string
 	ExecutionCommand string `toml:"execution_command"`
 	BuildCommand     string `toml:"build_command"`

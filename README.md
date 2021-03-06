@@ -84,8 +84,6 @@ watch_relative_dir = []
 ignore_relative_files = []
 # Ignore these directories
 ignore_relative_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
-# Buffer changes before rebuilding for a certain amount of time (ms)
-buffer_time = 1000
 ```
 
 # What features is it going to provide?
