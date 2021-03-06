@@ -2,6 +2,7 @@ package surveillance
 
 import (
 	"fmt"
+	"math/rand"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -63,7 +64,8 @@ func TestFileChangesDetection(t *testing.T) {
 
 		{"A file in an ignored and watched dir should not be detected.", customIgnoredAndIncludedDirCfg, "watched/test.go", false},
 	}
-
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(tests), func(i, j int) { tests[i], tests[j] = tests[j], tests[i] })
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := fileChanges(tt.cfg, tt.relPath, tt.shouldBeDetected); err != nil {
