@@ -18,7 +18,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&cfgPath, "c", "", "config path")
+	flag.StringVar(&cfgPath, "c", "", "relative config path")
 	flag.Parse()
 }
 
@@ -27,12 +27,12 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	cfg, err := parse("test.toml")
+	cfg, err := parse(cfgPath)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	fileChanges, err := surveillance.NewFileChanges(cfg)
+	fileChanges, err := surveillance.NewFileChangesDetection(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
