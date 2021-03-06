@@ -172,7 +172,11 @@ func (w *FileChanges) onDirChange(changeEvent fsnotify.Event) error {
 	dir := changeEvent.Name
 	if w.isExcludedDir(dir) {
 		if isWrite(changeEvent) {
-			w.notifyNoFileChange()
+			select {
+			case <-w.watchedFilesSubscription:
+			default:
+				w.notifyNoFileChange()
+			}
 		}
 
 		return nil
@@ -281,6 +285,6 @@ func (w *FileChanges) stopWatchingDirs() {
 	})
 }
 
-func (w *FileChanges) close() error {
+func (w *FileChanges) stopWatcher() error {
 	return w.watcher.Close()
 }
