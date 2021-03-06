@@ -99,7 +99,7 @@ func (w *FileChangesDetection) control() error {
 			w.buffer()
 		}
 
-		//w.reload()
+		w.reload()
 	}
 }
 
@@ -135,5 +135,5 @@ func (w *FileChangesDetection) cleanup() error {
 
 	w.reloader.Cleanup()
 
-	return utils.RemoveBuildDir(w.config.RelBuildDir())
+	return utils.RemoveBuildDir(w.config.RelBuildDir)
 }
