@@ -38,7 +38,7 @@ func TestInvalidSourcePathProvided(t *testing.T) {
 		t.Error(err)
 	}
 	err = utils.CreateDir(absDir)
-	defer utils.DeletePath(absDir)
+	defer utils.RemoveDir(absDir)
 	if err != nil {
 		t.Error(err)
 	}
@@ -75,7 +75,7 @@ func TestConfigMerge(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer utils.DeletePath(absPath)
+	defer utils.RemoveDir(absPath)
 
 	cfg, err := ParsedConfiguration(absPath)
 	if err != nil {
