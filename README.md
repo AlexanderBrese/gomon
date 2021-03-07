@@ -16,7 +16,7 @@ Include the script below to your client e.g. a static main.js & change `YOUR_POR
 function tryConnectToReload(address) {
   var conn;
   // This is a statically defined port on which the app is hosting the reload service.
-  conn = new WebSocket("ws://localhost:YOUR_PORT");
+  conn = new WebSocket("ws://localhost:3000/sync");
 
   conn.onclose = function(evt) {
     // The reload endpoint hasn't been started yet, we are retrying in 2 seconds.

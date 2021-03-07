@@ -2,78 +2,85 @@ package surveillance
 
 import (
 	"fmt"
-	"sync"
-	"time"
 
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/browsersync"
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/reload"
 	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
-	"github.com/fsnotify/fsnotify"
 )
 
 const MAX_WATCHED_FILES = 1000
-const MAX_WATCHED_DIRS = 10
 
 type FileChangesDetection struct {
-	config       *configuration.Configuration
-	watcher      *fsnotify.Watcher
-	reloader     *reload.Reload
-	mu           sync.Mutex
+	config   *configuration.Configuration
+	watcher  *utils.Batcher
+	reloader *reload.Reload
+
 	stopWatching chan bool
 	syncServer   *browsersync.Server
 
-	watchedFilesSubscription chan string
-	watchedFiles             chan string
-	watchedFileChecksums     *utils.FileChecksums
-
-	watchedDirCount uint
-	watchedDirPaths []string
-	unwatchDirs     chan bool
+	changeDetectedSubscription chan bool
+	changeDetected             chan bool
+	watchedFileChecksums       *utils.FileChecksums
 }
 
 func NewFileChangesDetection(cfg *configuration.Configuration) (*FileChangesDetection, error) {
-	watcher, err := fsnotify.NewWatcher()
+	batcher, err := utils.NewBatcher(cfg.BufferTime())
 	if err != nil {
 		return nil, err
 	}
 
 	w := &FileChangesDetection{
-		config:     cfg,
-		watcher:    watcher,
-		reloader:   reload.NewReload(cfg),
-		syncServer: browsersync.NewServer(),
+		config:                     cfg,
+		watcher:                    batcher,
+		changeDetectedSubscription: nil,
+		changeDetected:             make(chan bool, MAX_WATCHED_FILES),
+		stopWatching:               make(chan bool),
+		watchedFileChecksums:       utils.NewFileChecksums(),
+	}
 
-		watchedFiles:         make(chan string, MAX_WATCHED_FILES),
-		stopWatching:         make(chan bool),
-		watchedFileChecksums: utils.NewFileChecksums(),
+	if cfg.Reload {
+		w.reloader = reload.NewReload(cfg)
+	}
 
-		unwatchDirs:     make(chan bool, MAX_WATCHED_DIRS),
-		watchedDirCount: 0,
-		watchedDirPaths: make([]string, MAX_WATCHED_DIRS),
+	if cfg.Sync {
+		w.syncServer = browsersync.NewServer(cfg.Port)
 	}
 
 	return w, nil
 }
 
-func (w *FileChangesDetection) Subscribe(watchedFilesSubscription chan string) {
-	w.watchedFilesSubscription = watchedFilesSubscription
+func (w *FileChangesDetection) Subscribe(watchedFilesSubscription chan bool) {
+	w.changeDetectedSubscription = watchedFilesSubscription
 }
 
 func (w *FileChangesDetection) Init() error {
-	if err := w.checkRunEnvironment(); err != nil {
+	if w.config.Reload {
+		if err := w.checkRunEnvironment(); err != nil {
+			return err
+		}
+	}
+
+	if err := w.crawlWatchedDirs(w.config.Root); err != nil {
 		return err
 	}
-	w.syncServer.Start(w.config.Port)
-	return w.watchDir(w.config.Root)
+
+	if w.config.Sync {
+		w.syncServer.Start()
+	}
+
+	return nil
 }
 
 func (w *FileChangesDetection) Surveil() error {
+	go w.watch()
+
 	if err := w.control(); err != nil {
 		return err
 	}
 
-	return w.cleanup()
+	w.cleanup()
+	return nil
 }
 
 func (w *FileChangesDetection) StopWatching() {
@@ -89,56 +96,37 @@ func (w *FileChangesDetection) checkRunEnvironment() error {
 }
 
 func (w *FileChangesDetection) control() error {
+	firstRun := make(chan bool, 1)
+	firstRun <- true
+
 	for {
 		select {
 		case <-w.stopWatching:
 			return nil
-		case filePath := <-w.watchedFiles:
-			relPath, err := utils.RelPath(w.config.Root, filePath)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("%s has changed\n", relPath)
-			w.buffer()
+		case <-w.changeDetected:
+			fmt.Println("change detected")
+		case <-firstRun:
+			break
 		}
 
-		w.reload()
-		<-w.reloader.FinishedRunning
-		w.syncServer.Sync()
-	}
-}
-
-func (w *FileChangesDetection) reload() {
-	w.reloader.Reload()
-}
-
-func (w *FileChangesDetection) buffer() {
-	w.delay()
-	w.flushWatchedFiles()
-}
-
-func (w *FileChangesDetection) delay() {
-	time.Sleep(w.config.BufferTime())
-}
-
-func (w *FileChangesDetection) flushWatchedFiles() {
-	for {
-		select {
-		case <-w.watchedFiles:
-		default:
-			return
+		if w.config.Reload {
+			w.reloader.Reload()
+			<-w.reloader.FinishedRunning
+		}
+		if w.config.Sync {
+			w.syncServer.Sync()
 		}
 	}
 }
 
-func (w *FileChangesDetection) cleanup() error {
-	w.stopWatchingDirs()
+func (w *FileChangesDetection) cleanup() {
+	w.stopWatcher()
 
-	if err := w.stopWatcher(); err != nil {
-		return err
+	if w.config.Reload {
+		w.reloader.Cleanup()
 	}
 
-	w.reloader.Cleanup()
-
-	return utils.RemoveBuildDir(w.config.RelBuildDir)
+	if w.config.Sync {
+		w.syncServer.Stop()
+	}
 }

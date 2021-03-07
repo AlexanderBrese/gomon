@@ -28,11 +28,13 @@ type Configuration struct {
 	ExcludeDirs      []string `toml:"ignore_relative_dir"`
 	IncludeDirs      []string `toml:"watch_relative_dir"`
 	IgnoreFiles      []string `toml:"ignore_relative_files"`
-	bufferTime       int
+	EventBufferTime  int
 	Port             int `toml:"port"`
 	Root             string
 	ExecutionCommand string `toml:"execution_command"`
 	BuildCommand     string `toml:"build_command"`
+	Reload           bool
+	Sync             bool
 }
 
 func DefaultConfiguration() *Configuration {
@@ -46,11 +48,13 @@ func DefaultConfiguration() *Configuration {
 		ExcludeDirs:      []string{"assets", "tmp", "vendor", "node_modules", "build"},
 		IncludeDirs:      []string{},
 		IgnoreFiles:      []string{},
-		bufferTime:       1000,
+		EventBufferTime:  1000,
 		ExecutionCommand: "",
 		Port:             3000,
 		Root:             root,
 		BuildCommand:     "go build -o",
+		Reload:           true,
+		Sync:             true,
 	}
 }
 
@@ -58,6 +62,9 @@ func TestConfiguration() (*Configuration, error) {
 	cfg := DefaultConfiguration()
 	cfg.IncludeExts = []string{}
 	cfg.ExcludeDirs = []string{"tmp", "build"}
+	cfg.Reload = false
+	cfg.Sync = false
+
 	if err := adapt(cfg); err != nil {
 		return nil, err
 	}
@@ -65,7 +72,7 @@ func TestConfiguration() (*Configuration, error) {
 }
 
 func (c *Configuration) BufferTime() time.Duration {
-	return time.Duration(c.bufferTime) * time.Millisecond
+	return time.Duration(300) * time.Millisecond
 }
 
 func (c *Configuration) SrcDir() (string, error) {

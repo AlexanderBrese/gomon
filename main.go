@@ -27,7 +27,7 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	cfg, err := parse(cfgPath)
+	cfg, err := parse("test.toml")
 	if err != nil {
 		log.Fatal(err)
 		return

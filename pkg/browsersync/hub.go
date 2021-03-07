@@ -23,6 +23,12 @@ func NewHub() *Hub {
 	}
 }
 
+func (h *Hub) stop() {
+	for client := range h.clients {
+		client.close()
+	}
+}
+
 func (h *Hub) listen() {
 	for {
 		select {

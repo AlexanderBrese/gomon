@@ -2,9 +2,11 @@ package browsersync
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 const (
@@ -13,18 +15,24 @@ const (
 
 type Server struct {
 	hub *Hub
+	srv *http.Server
 }
 
-func NewServer() *Server {
+type RouteHandler struct {
+	hub *Hub
+}
+
+func NewServer(port int) *Server {
 	return &Server{
 		hub: NewHub(),
+		srv: &http.Server{Addr: fmt.Sprintf(":%d", port)},
 	}
 }
 
-func (s *Server) Start(port int) {
+func (s *Server) Start() {
 	s.startHub()
 	s.setupRoute()
-	s.startServer(port)
+	s.startServer()
 }
 
 func (s *Server) Sync() {
@@ -32,8 +40,11 @@ func (s *Server) Sync() {
 	s.hub.broadcast <- message
 }
 
-func (s *Server) startHub() {
-	go s.hub.listen()
+func (s *Server) Stop() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	s.hub.stop()
+	return s.srv.Shutdown(ctx)
 }
 
 func (s *Server) setupRoute() {
@@ -42,11 +53,11 @@ func (s *Server) setupRoute() {
 	})
 }
 
-func (s *Server) startServer(port int) {
-	go s.serve(port)
-	log.Println("Serving sync server at", port)
+func (s *Server) startHub() {
+	go s.hub.listen()
 }
 
-func (s *Server) serve(port int) error {
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+func (s *Server) startServer() {
+	go s.srv.ListenAndServe()
+	log.Println("Serving sync server at", s.srv.Addr)
 }

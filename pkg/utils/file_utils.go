@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 func CheckPath(path string) error {
@@ -126,4 +128,16 @@ func RemoveRootDir(relPath string) error {
 		return err
 	}
 	return RemoveDir(parent)
+}
+
+func IsWrite(ev fsnotify.Event) bool {
+	return ev.Op&fsnotify.Write == fsnotify.Write
+}
+
+func IsRemove(ev fsnotify.Event) bool {
+	return ev.Op&fsnotify.Remove == fsnotify.Remove
+}
+
+func IsCreate(ev fsnotify.Event) bool {
+	return ev.Op&fsnotify.Create == fsnotify.Create
 }

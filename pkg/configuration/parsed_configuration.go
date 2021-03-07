@@ -12,7 +12,11 @@ import (
 // ParsedConfiguration parses a configuration file and merges it with the default configuration
 func ParsedConfiguration(path string) (*Configuration, error) {
 	if path == "" {
-		return DefaultConfiguration(), nil
+		cfg := DefaultConfiguration()
+		if err := adapt(cfg); err != nil {
+			return nil, err
+		}
+		return cfg, nil
 	} else if err := utils.CheckPath(path); err != nil {
 		return nil, err
 	} else {
