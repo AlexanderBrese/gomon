@@ -3,10 +3,10 @@ package surveillance
 import (
 	"fmt"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/browsersync"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/reload"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/browsersync"
+	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
+	"github.com/AlexanderBrese/GOATmon/pkg/reload"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
 const MAX_WATCHED_FILES = 1000

@@ -3,7 +3,7 @@ package configuration
 import (
 	"testing"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 	"github.com/pelletier/go-toml"
 )
 
@@ -13,7 +13,7 @@ func TestNoConfigProvided(t *testing.T) {
 		t.Errorf("want: config, got: %q", err)
 	}
 	if cfg != DefaultConfiguration() {
-		t.Errorf("want: %q, got: %q", DefaultConfiguration(), cfg)
+		t.Errorf("want: %v, got: %v", DefaultConfiguration(), cfg)
 	}
 }
 

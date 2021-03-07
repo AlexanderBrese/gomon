@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
 func (r *Reload) RunCleanup() {

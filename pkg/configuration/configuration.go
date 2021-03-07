@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
 var root string
@@ -72,7 +72,7 @@ func TestConfiguration() (*Configuration, error) {
 }
 
 func (c *Configuration) BufferTime() time.Duration {
-	return time.Duration(300) * time.Millisecond
+	return time.Duration(c.EventBufferTime) * time.Millisecond
 }
 
 func (c *Configuration) SrcDir() (string, error) {

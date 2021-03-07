@@ -3,7 +3,7 @@ package reload
 import (
 	"sync"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
+	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
 )
 
 type Reload struct {

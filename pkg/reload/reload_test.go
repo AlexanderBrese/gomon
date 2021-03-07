@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
 const CHECK_RELOADING_DELAY = 600

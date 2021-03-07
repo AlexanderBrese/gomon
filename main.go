@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/surveillance"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
+	"github.com/AlexanderBrese/GOATmon/pkg/surveillance"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
 var (

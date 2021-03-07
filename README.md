@@ -1,6 +1,6 @@
 # Why is it necessary?
 
-Because it also reloads the `browser` upon change.
+Because it also refreshes the `browser` upon change.
 
 # How does it work?
 

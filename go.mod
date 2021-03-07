@@ -1,4 +1,4 @@
-module github.com/AlexanderBrese/go-server-browser-reload
+module github.com/AlexanderBrese/GOATmon
 
 go 1.16
 

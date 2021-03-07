@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
 func TestBuild(t *testing.T) {
