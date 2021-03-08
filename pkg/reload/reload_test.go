@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AlexanderBrese/Gomon/pkg/configuration"
-	"github.com/AlexanderBrese/Gomon/pkg/utils"
+	"github.com/AlexanderBrese/gomon/pkg/configuration"
+	"github.com/AlexanderBrese/gomon/pkg/utils"
 )
 
 const checkReloadDelay = 600

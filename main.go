@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/AlexanderBrese/Gomon/pkg/configuration"
-	"github.com/AlexanderBrese/Gomon/pkg/surveillance"
-	"github.com/AlexanderBrese/Gomon/pkg/utils"
+	"github.com/AlexanderBrese/gomon/pkg/configuration"
+	"github.com/AlexanderBrese/gomon/pkg/surveillance"
+	"github.com/AlexanderBrese/gomon/pkg/utils"
 )
 
 var cfgPath string

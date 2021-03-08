@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/AlexanderBrese/Gomon/pkg/utils"
+	"github.com/AlexanderBrese/gomon/pkg/utils"
 )
 
 func (r *Reload) kill(cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser) error {

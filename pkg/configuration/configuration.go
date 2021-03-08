@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/AlexanderBrese/Gomon/pkg/utils"
+	"github.com/AlexanderBrese/gomon/pkg/utils"
 )
 
 var root string
@@ -41,7 +41,7 @@ type Configuration struct {
 func DefaultConfiguration() *Configuration {
 	return &Configuration{
 		BuildName:        "main",
-		LogName:          "Gomon.log",
+		LogName:          "gomon.log",
 		RelSrcDir:        "",
 		RelBuildDir:      "tmp/build",
 		RelLogDir:        "tmp",

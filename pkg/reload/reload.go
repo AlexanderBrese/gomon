@@ -3,7 +3,7 @@ package reload
 import (
 	"sync"
 
-	"github.com/AlexanderBrese/Gomon/pkg/configuration"
+	"github.com/AlexanderBrese/gomon/pkg/configuration"
 )
 
 // Reload recompiles the build and restarts the binary

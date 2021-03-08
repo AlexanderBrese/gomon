@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/AlexanderBrese/Gomon/pkg/utils"
+	"github.com/AlexanderBrese/gomon/pkg/utils"
 	"github.com/imdario/mergo"
 	"github.com/pelletier/go-toml"
 )
@@ -70,12 +70,12 @@ func adapt(cfg *Configuration) error {
 		if !strings.HasSuffix(cfg.BuildName, extName) {
 			cfg.BuildName += extName
 		}
-		binary, err := cfg.Binary()
-		if err != nil {
-			return err
-		}
-		cfg.ExecutionCommand = binary
 	}
+	binary, err := cfg.Binary()
+	if err != nil {
+		return err
+	}
+	cfg.ExecutionCommand = binary
 	return nil
 }
 

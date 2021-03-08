@@ -1,10 +1,10 @@
 package surveillance
 
 import (
-	"github.com/AlexanderBrese/Gomon/pkg/browsersync"
-	"github.com/AlexanderBrese/Gomon/pkg/configuration"
-	"github.com/AlexanderBrese/Gomon/pkg/reload"
-	"github.com/AlexanderBrese/Gomon/pkg/utils"
+	"github.com/AlexanderBrese/gomon/pkg/browsersync"
+	"github.com/AlexanderBrese/gomon/pkg/configuration"
+	"github.com/AlexanderBrese/gomon/pkg/reload"
+	"github.com/AlexanderBrese/gomon/pkg/utils"
 )
 
 type Environment struct {

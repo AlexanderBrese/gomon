@@ -3,7 +3,7 @@ package configuration
 import (
 	"testing"
 
-	"github.com/AlexanderBrese/Gomon/pkg/utils"
+	"github.com/AlexanderBrese/gomon/pkg/utils"
 	"github.com/pelletier/go-toml"
 )
 

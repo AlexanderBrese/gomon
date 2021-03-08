@@ -1,6 +1,6 @@
 package surveillance
 
-import "github.com/AlexanderBrese/Gomon/pkg/configuration"
+import "github.com/AlexanderBrese/gomon/pkg/configuration"
 
 type Gomon struct {
 	environment *Environment

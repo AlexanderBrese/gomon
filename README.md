@@ -5,7 +5,7 @@ Because it also refreshes the `browser` upon change.
 # How does it work?
 
 Plain: Watches for code changes, reloads the specified binary e.g. a webserver and calls the client through a websocket to reload.<br><br>
-![how-does-it-work](https://github.com/AlexanderBrese/GOATmon/blob/main/Gomon.gif)
+![how-does-it-work](https://github.com/AlexanderBrese/gomon/blob/main/gomon.gif)
 
 # Usage
 
@@ -42,21 +42,21 @@ try {
 }
 ```
 
-## install Gomon
+## install gomon
 
 ```
-go get -u github.com/AlexanderBrese/Gomon
+go get -u github.com/AlexanderBrese/gomon
 ```
 
-## run Gomon 
+## run gomon 
 
 If you want to configure the reload behavior or set change paths then just provide a `configuration` to the process.
 
 ```
-Gomon [-c PATH_TO_YOUR_CONFIG]
+gomon [-c PATH_TO_YOUR_CONFIG]
 ```
 
-## configure Gomon
+## configure gomon
 
 `Default` configuration:
 ```toml
@@ -67,13 +67,13 @@ build_command = "go build -o"
 # How should the build be run?
 execution_command = "./tmp/build/main"
 # What should the log be named?
-log_name = "Gomon.log"
+log_name = "gomon.log"
 # What should we built from?
 relative_source_dir = ""
 # Where should the build be stored?
 relative_build_dir = "tmp/build"
 # Where should the log be stored?
-relative_log_dir = "tmp/Gomon.log"
+relative_log_dir = "tmp"
 # The port used for the browser syncing server
 port = 3000
 # Watch these extensions for changes
