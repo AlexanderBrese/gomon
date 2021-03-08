@@ -5,7 +5,7 @@ Because it also refreshes the `browser` upon change.
 # How does it work?
 
 Plain: Watches for code changes, reloads the specified binary e.g. a webserver and calls the client through a websocket to reload.<br><br>
-![how-does-it-work](https://github.com/AlexanderBrese/GOATmon/blob/main/GOATmon.png)
+![how-does-it-work](https://github.com/AlexanderBrese/GOATmon/blob/main/Gomon.gif)
 
 # Usage
 
