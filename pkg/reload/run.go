@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/AlexanderBrese/GOATmon/pkg/utils"
+	"github.com/AlexanderBrese/Gomon/pkg/utils"
 )
 
 // RunCleanup stops the run

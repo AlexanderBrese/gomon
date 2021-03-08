@@ -1,4 +1,4 @@
-module github.com/AlexanderBrese/GOATmon
+module github.com/AlexanderBrese/Gomon
 
 go 1.16
 

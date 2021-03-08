@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/AlexanderBrese/GOATmon/pkg/utils"
+	"github.com/AlexanderBrese/Gomon/pkg/utils"
 )
 
 var root string

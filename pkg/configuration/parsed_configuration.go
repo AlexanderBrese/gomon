@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/AlexanderBrese/GOATmon/pkg/utils"
+	"github.com/AlexanderBrese/Gomon/pkg/utils"
 	"github.com/imdario/mergo"
 	"github.com/pelletier/go-toml"
 )

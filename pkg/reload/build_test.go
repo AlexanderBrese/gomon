@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
-	"github.com/AlexanderBrese/GOATmon/pkg/utils"
+	"github.com/AlexanderBrese/Gomon/pkg/configuration"
+	"github.com/AlexanderBrese/Gomon/pkg/utils"
 )
 
 const (
