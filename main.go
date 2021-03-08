@@ -24,22 +24,21 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	defer _recover()
 
-	cfg, err := parseConfig(cfgPath)
+	cfg, err := parse(cfgPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	cd, err := changeDetection(cfg)
+	gomon, err := surveillance.NewGomon(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	go func() {
 		<-sigs
-		//<-time.After(2 * time.Second)
-		cd.Stop()
+		gomon.Stop()
 	}()
 
-	cd.Start()
+	gomon.Start()
 }
 
 func _recover() {
@@ -48,15 +47,7 @@ func _recover() {
 	}
 }
 
-func changeDetection(cfg *configuration.Configuration) (*surveillance.Gomon, error) {
-	changeDetection, err := surveillance.NewGomon(cfg)
-	if err != nil {
-		return nil, err
-	}
-	return changeDetection, nil
-}
-
-func parseConfig(cfgPath string) (*configuration.Configuration, error) {
+func parse(cfgPath string) (*configuration.Configuration, error) {
 	absPath := ""
 	if cfgPath != "" {
 		var err error
