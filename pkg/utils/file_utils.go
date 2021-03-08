@@ -96,7 +96,12 @@ func CreateFile(path string, content []byte) (*os.File, error) {
 	if err = WriteFile(f, content); err != nil {
 		return nil, err
 	}
-	defer CloseFile(f)
+	defer func() {
+		if err := CloseFile(f); err != nil {
+			// TODO: log
+			return
+		}
+	}()
 	return f, nil
 }
 

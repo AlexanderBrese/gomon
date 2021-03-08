@@ -38,10 +38,14 @@ func TestInvalidSourcePathProvided(t *testing.T) {
 		t.Error(err)
 	}
 	err = utils.CreateAllDir(absDir)
-	defer utils.RemoveAllDir(absDir)
 	if err != nil {
 		t.Error(err)
 	}
+	defer func() {
+		if err := utils.RemoveAllDir(absDir); err != nil {
+			t.Error(err)
+		}
+	}()
 
 	path := dir + "/test.toml"
 	absPath, err := utils.CurrentAbsolutePath(path)
@@ -75,7 +79,11 @@ func TestConfigMerge(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer utils.RemoveAllDir(absPath)
+	defer func() {
+		if err := utils.RemoveAllDir(absPath); err != nil {
+			t.Error(err)
+		}
+	}()
 
 	cfg, err := ParsedConfiguration(absPath)
 	if err != nil {

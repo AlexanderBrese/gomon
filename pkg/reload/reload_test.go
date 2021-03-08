@@ -25,7 +25,12 @@ func TestReload(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer runCleanup(reloader)
+	defer func() {
+		if err := runCleanup(reloader); err != nil {
+			// TODO: log
+			return
+		}
+	}()
 
 	reloadStart(reloader)
 	time.Sleep(checkReloadDelay * time.Millisecond)

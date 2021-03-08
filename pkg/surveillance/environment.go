@@ -44,19 +44,22 @@ func NewEnvironment(cfg *configuration.Configuration) (*Environment, error) {
 	return e, nil
 }
 
-func (e *Environment) Teardown() {
+func (e *Environment) Teardown() error {
 	if e.config.Reload {
 		e.reloader.Cleanup()
 		<-e.reloader.FinishedKilling
 	}
 
 	if e.config.Sync {
-		e.sync.Stop()
+		if err := e.sync.Stop(); err != nil {
+			return err
+		}
 	}
 
 	e.detector.Close()
 	e.stopDetecting <- true
 	e.stopRefreshing <- true
+	return nil
 }
 
 func (e *Environment) checkRunEnvironment() error {

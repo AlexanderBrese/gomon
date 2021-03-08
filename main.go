@@ -35,7 +35,10 @@ func main() {
 
 	go func() {
 		<-sigs
-		gomon.Stop()
+		if err := gomon.Stop(); err != nil {
+			// TODO: log
+			return
+		}
 	}()
 
 	gomon.Start()

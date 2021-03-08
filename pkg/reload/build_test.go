@@ -32,7 +32,11 @@ func TestBuild(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer buildCleanup(reloader)
+	defer func() {
+		if err := buildCleanup(reloader); err != nil {
+			t.Error(err)
+		}
+	}()
 
 	if err := buildStart(reloader); err != nil {
 		t.Error(err)

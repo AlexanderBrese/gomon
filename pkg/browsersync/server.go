@@ -48,7 +48,10 @@ func (s *Server) Stop() error {
 
 func (s *Server) setupRoute() {
 	http.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
-		communicate(s.hub, w, r)
+		if err := communicate(s.hub, w, r); err != nil {
+			// TODO: log
+			return
+		}
 	})
 }
 
@@ -57,6 +60,11 @@ func (s *Server) startHub() {
 }
 
 func (s *Server) startServer() {
-	go s.srv.ListenAndServe()
-	log.Println("Serving sync server at", s.srv.Addr)
+	go func() {
+		if err := s.srv.ListenAndServe(); err != nil {
+			// TODO: log
+			return
+		}
+		log.Println("Serving sync server at", s.srv.Addr)
+	}()
 }

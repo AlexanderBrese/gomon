@@ -21,10 +21,10 @@ func (r *Reload) run() error {
 	if err != nil {
 		return err
 	}
+
 	r.FinishedRunning <- true
 	utils.WithLock(&r.mu, func() {
 		r.running = true
-
 	})
 
 	go func() {
@@ -32,6 +32,11 @@ func (r *Reload) run() error {
 		_, _ = io.Copy(os.Stderr, stderr)
 	}()
 
-	go r.kill(cmd, stdout, stderr)
+	go func() {
+		if err := r.kill(cmd, stdout, stderr); err != nil {
+			// TODO: log
+			return
+		}
+	}()
 	return nil
 }

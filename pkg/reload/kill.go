@@ -14,7 +14,10 @@ func (r *Reload) kill(cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser)
 		stdout.Close()
 		stderr.Close()
 		r.FinishedKilling <- true
-		r.removeBinary()
+		if err := r.removeBinary(); err != nil {
+			// TODO: log
+			return
+		}
 	}()
 
 	var err error

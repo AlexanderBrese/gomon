@@ -41,7 +41,12 @@ func (r *Reload) Cleanup() {
 // Run cleans up and starts the new build
 func (r *Reload) Run() {
 	r.Cleanup()
-	go r.start()
+	go func() {
+		if err := r.start(); err != nil {
+			// TODO: log
+			return
+		}
+	}()
 }
 
 func (r *Reload) start() error {

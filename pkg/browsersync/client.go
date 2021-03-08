@@ -45,7 +45,13 @@ func communicate(hub *Hub, w http.ResponseWriter, r *http.Request) error {
 
 	client := &Client{hub: hub, conn: conn, outboundMessage: make(chan []byte, outboundMessages)}
 	client.hub.register <- client
-	go client.writeToSocket()
+
+	defer func() {
+		if err := client.writeToSocket(); err != nil {
+			// TODO: log
+			return
+		}
+	}()
 
 	return nil
 }
@@ -67,8 +73,7 @@ func (c *Client) writeToSocket() error {
 		case message, ok := <-c.outboundMessage:
 			if !ok {
 				// The hub closed the channel.
-				c.write(websocket.CloseMessage, []byte{})
-				return nil
+				return c.write(websocket.CloseMessage, []byte{})
 			}
 
 			if err := c.writeDeadline(); err != nil {
@@ -78,12 +83,18 @@ func (c *Client) writeToSocket() error {
 			if err != nil {
 				return err
 			}
-			w.Write(message)
+			if _, err := w.Write(message); err != nil {
+				return err
+			}
 
 			n := len(c.outboundMessage)
 			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-c.outboundMessage)
+				if _, err := w.Write(newline); err != nil {
+					return err
+				}
+				if _, err := w.Write(<-c.outboundMessage); err != nil {
+					return err
+				}
 			}
 
 			if err := w.Close(); err != nil {

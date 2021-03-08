@@ -35,10 +35,18 @@ func (c *Gomon) Subscribe(sub chan bool) {
 }
 
 func (c *Gomon) Start() {
-	go c.detection.Run()
+	go func() {
+		if err := c.detection.Run(); err != nil {
+			// TODO: log
+			return
+		}
+	}()
 	c.control.Run()
 }
 
-func (c *Gomon) Stop() {
-	c.environment.Teardown()
+func (c *Gomon) Stop() error {
+	if err := c.environment.Teardown(); err != nil {
+		return err
+	}
+	return nil
 }

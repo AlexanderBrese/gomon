@@ -90,7 +90,12 @@ func detect(cfg *configuration.Configuration, relFile string, shouldBeDetected b
 	go changeDetection.Start()
 
 	file := filepath.Join(cfg.Root, relFile)
-	defer cleanup(file, relFile, subscription, changeDetection)
+	defer func() {
+		if err := cleanup(file, relFile, subscription, changeDetection); err != nil {
+			// TODO: log
+			return
+		}
+	}()
 
 	if err := do(relFile, file); err != nil {
 		return err
@@ -102,17 +107,23 @@ func detect(cfg *configuration.Configuration, relFile string, shouldBeDetected b
 	return nil
 }
 
-func cleanup(file string, relFile string, sub chan bool, cd *Gomon) error {
-	cd.Stop()
+func cleanup(file string, relFile string, sub chan bool, g *Gomon) error {
+	if err := g.Stop(); err != nil {
+		return err
+	}
 	close(sub)
 	if isInsideDir(relFile) {
 		dir, err := dir(relFile)
 		if err != nil {
 			return err
 		}
-		delete(dir)
+		if err := delete(dir); err != nil {
+			return err
+		}
 	} else {
-		delete(file)
+		if err := delete(file); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -133,9 +144,19 @@ func do(relFile string, file string) error {
 		if err != nil {
 			return err
 		}
-		go createTemporaryDirectoryAndFile(dir, file)
+		go func() {
+			if err := createTemporaryDirectoryAndFile(dir, file); err != nil {
+				//TODO: log
+				return
+			}
+		}()
 	} else {
-		go createTemporaryFile(file)
+		go func() {
+			if err := createTemporaryFile(file); err != nil {
+				//TODO: log
+				return
+			}
+		}()
 	}
 
 	return nil
