@@ -49,7 +49,7 @@ func DefaultConfiguration() *Configuration {
 		ExcludeDirs:      []string{"assets", "tmp", "vendor", "node_modules", "build"},
 		IncludeDirs:      []string{},
 		IgnoreFiles:      []string{},
-		EventBufferTime:  1000,
+		EventBufferTime:  100,
 		ExecutionCommand: "",
 		Port:             3000,
 		Root:             root,

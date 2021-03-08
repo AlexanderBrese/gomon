@@ -21,9 +21,10 @@ func (r *Reload) run() error {
 	if err != nil {
 		return err
 	}
+	r.FinishedRunning <- true
 	utils.WithLock(&r.mu, func() {
 		r.running = true
-		r.FinishedRunning <- true
+
 	})
 
 	go func() {
