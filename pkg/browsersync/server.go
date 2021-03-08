@@ -9,19 +9,15 @@ import (
 	"time"
 )
 
-const (
-	ROUTE = "/sync"
-)
+const route = "/sync"
 
+// Server serves a REST route the client connects to receive sync messages
 type Server struct {
 	hub *Hub
 	srv *http.Server
 }
 
-type RouteHandler struct {
-	hub *Hub
-}
-
+// NewServer creates a new Server with the port provided
 func NewServer(port int) *Server {
 	return &Server{
 		hub: NewHub(),
@@ -29,17 +25,20 @@ func NewServer(port int) *Server {
 	}
 }
 
+// Start starts the server and lets the hub listen for clients
 func (s *Server) Start() {
 	s.startHub()
 	s.setupRoute()
 	s.startServer()
 }
 
+// Sync sends a sync message to the clients
 func (s *Server) Sync() {
 	message := bytes.TrimSpace([]byte("sync"))
 	s.hub.broadcast <- message
 }
 
+// Stop stops the hub and the server gracefully
 func (s *Server) Stop() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -48,7 +47,7 @@ func (s *Server) Stop() error {
 }
 
 func (s *Server) setupRoute() {
-	http.HandleFunc(ROUTE, func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
 		communicate(s.hub, w, r)
 	})
 }

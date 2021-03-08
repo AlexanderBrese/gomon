@@ -4,7 +4,6 @@ import (
 	"io"
 	"os/exec"
 	"strconv"
-	"strings"
 )
 
 func (r *Reload) killCmd(cmd *exec.Cmd) (pid int, err error) {
@@ -16,10 +15,6 @@ func (r *Reload) killCmd(cmd *exec.Cmd) (pid int, err error) {
 
 func (r *Reload) startCmd(cmd string) (*exec.Cmd, io.ReadCloser, io.ReadCloser, error) {
 	var err error
-
-	if !strings.Contains(cmd, ".exe") {
-		//e.runnerLog("CMD will not recognize non .exe file for execution, path: %s", cmd)
-	}
 
 	c := exec.Command("cmd", "/c", cmd)
 	stderr, err := c.StderrPipe()

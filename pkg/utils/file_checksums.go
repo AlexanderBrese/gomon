@@ -14,6 +14,7 @@ type FileChecksums struct {
 	storage map[string]string
 }
 
+// NewFileChecksums creates a new file checksums map
 func NewFileChecksums() *FileChecksums {
 	return &FileChecksums{storage: make(map[string]string)}
 }
@@ -26,6 +27,7 @@ func (c *FileChecksums) UpdateFileChecksum(path string, checksum string) {
 	c.storage[path] = checksum
 }
 
+// HasChanged checks if the checksum for the given path has changed in a thread safe manner
 func (c *FileChecksums) HasChanged(path string, checksum string) bool {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -33,6 +35,7 @@ func (c *FileChecksums) HasChanged(path string, checksum string) bool {
 	return checksum != c.storage[path]
 }
 
+// FileChecksum calculates a new checksum for the given path
 func FileChecksum(path string) (string, error) {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {

@@ -6,17 +6,19 @@ import (
 	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
 )
 
+// Reload recompiles the build and restarts the binary
 type Reload struct {
 	config *configuration.Configuration
+	mu     sync.Mutex
 
 	running         bool
 	startBuilding   chan bool
 	stop            chan bool
 	stopRunning     chan bool
 	FinishedRunning chan bool
-	mu              sync.Mutex
 }
 
+// NewReload creates a new Reload with the config provided
 func NewReload(cfg *configuration.Configuration) *Reload {
 	return &Reload{
 		config:          cfg,
@@ -28,12 +30,14 @@ func NewReload(cfg *configuration.Configuration) *Reload {
 	}
 }
 
+// Cleanup stops the current build and the run
 func (r *Reload) Cleanup() {
 	r.BuildCleanup()
 	r.RunCleanup()
 }
 
-func (r *Reload) Reload() {
+// Run cleans up and starts the new build
+func (r *Reload) Run() {
 	r.Cleanup()
 	go r.start()
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-// Batcher batches file watch events in a given interval.
+// Batcher collects detected file changes throughout a given time interval.
 type Batcher struct {
 	*fsnotify.Watcher
 	interval time.Duration
@@ -16,7 +16,7 @@ type Batcher struct {
 	Errors chan []error
 }
 
-// NewBatcher creates and starts a Batcher with the given time interval.
+// NewBatcher creates and runs a Batcher with the given time interval.
 func NewBatcher(interval time.Duration) (*Batcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 
@@ -53,7 +53,6 @@ OuterLoop:
 				b.Errors <- errs
 				errs = make([]error, 0)
 			}
-
 		case <-b.done:
 			break OuterLoop
 		}
@@ -61,6 +60,7 @@ OuterLoop:
 	close(b.done)
 }
 
+// Close stops the Batcher
 func (b *Batcher) Close() {
 	b.done <- struct{}{}
 	b.Watcher.Close()

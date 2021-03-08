@@ -1,7 +1,6 @@
 package browsersync
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -10,60 +9,45 @@ import (
 
 const (
 	// to write a message to the peer
-	WRITE_DEADLINE = 10 * time.Second
+	writeDeadline = 10 * time.Second
 	// to read a pong message from the peer
-	PONG_DEADLINE = 60 * time.Second
+	ponDeadline = 60 * time.Second
 	// to send pings to the peer
-	PING_PERIOD = PONG_DEADLINE * 9 / 10
+	pingPeriod = ponDeadline * 9 / 10
 	// max outbound messages
-	OUTBOUND_MESSAGES = 256
+	outboundMessages = 256
 )
 
 var (
-	newline = []byte{'\n'}
+	newline  = []byte{'\n'}
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
-// Client stands between the socket and the hub
+// Client stands between the socket and the hub and is one directional (write only)
 type Client struct {
-	hub            *Hub
-	conn           *websocket.Conn
-	inboundMessage chan []byte
+	hub             *Hub
+	conn            *websocket.Conn
+	outboundMessage chan []byte
 }
 
+// Sets up the socket communication
 func communicate(hub *Hub, w http.ResponseWriter, r *http.Request) error {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return err
 	}
 
-	client := &Client{hub: hub, conn: conn, inboundMessage: make(chan []byte, OUTBOUND_MESSAGES)}
+	client := &Client{hub: hub, conn: conn, outboundMessage: make(chan []byte, outboundMessages)}
 	client.hub.register <- client
 	go client.writeToSocket()
-	//client.readToHub()
 
 	return nil
-}
-
-// Reads messages from the socket to the hub
-func (c *Client) readToHub() {
-	defer c.close()
-	for {
-		_, _, err := c.conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Printf("An error happened when reading from the Websocket client: %v", err)
-			}
-			break
-		}
-	}
 }
 
 // Unregisters from the hub and closes the connection
@@ -74,14 +58,14 @@ func (c *Client) close() {
 
 // Writes message from the hub to the socket
 func (c *Client) writeToSocket() error {
-	ticker := time.NewTicker(PING_PERIOD)
+	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
 		c.close()
 	}()
 	for {
 		select {
-		case message, ok := <-c.inboundMessage:
+		case message, ok := <-c.outboundMessage:
 			if !ok {
 				// The hub closed the channel.
 				c.write(websocket.CloseMessage, []byte{})
@@ -97,10 +81,10 @@ func (c *Client) writeToSocket() error {
 			}
 			w.Write(message)
 
-			n := len(c.inboundMessage)
+			n := len(c.outboundMessage)
 			for i := 0; i < n; i++ {
 				w.Write(newline)
-				w.Write(<-c.inboundMessage)
+				w.Write(<-c.outboundMessage)
 			}
 
 			if err := w.Close(); err != nil {
@@ -122,6 +106,7 @@ func (c *Client) write(messageType int, data []byte) error {
 	return c.conn.WriteMessage(messageType, data)
 }
 
+// Writes with a certain deadline
 func (c *Client) writeDeadline() error {
-	return c.conn.SetWriteDeadline(time.Now().Add(WRITE_DEADLINE))
+	return c.conn.SetWriteDeadline(time.Now().Add(writeDeadline))
 }

@@ -1,5 +1,6 @@
 package browsersync
 
+// Hub is a client switch that broadcasts messages
 type Hub struct {
 	// Registered clients
 	clients map[*Client]bool
@@ -14,6 +15,7 @@ type Hub struct {
 	unregister chan *Client
 }
 
+// NewHub creates a new Hub
 func NewHub() *Hub {
 	return &Hub{
 		clients:    make(map[*Client]bool),
@@ -49,16 +51,16 @@ func (h *Hub) registerClient(client *Client) {
 func (h *Hub) unregisterClient(client *Client) {
 	if _, ok := h.clients[client]; ok {
 		delete(h.clients, client)
-		close(client.inboundMessage)
+		close(client.outboundMessage)
 	}
 }
 
 func (h *Hub) broadcastMessage(message []byte) {
 	for client := range h.clients {
 		select {
-		case client.inboundMessage <- message:
+		case client.outboundMessage <- message:
 		default:
-			close(client.inboundMessage)
+			close(client.outboundMessage)
 			delete(h.clients, client)
 		}
 	}

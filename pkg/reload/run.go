@@ -7,6 +7,7 @@ import (
 	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
+// RunCleanup stops the run
 func (r *Reload) RunCleanup() {
 	utils.WithLock(&r.mu, func() {
 		if r.running {

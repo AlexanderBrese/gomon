@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// BuildCleanup stops the build
 func (r *Reload) BuildCleanup() {
 	select {
 	case <-r.startBuilding:

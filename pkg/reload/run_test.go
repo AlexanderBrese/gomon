@@ -10,7 +10,7 @@ import (
 	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
-const CHECK_RUNNING_DELAY = 300
+const checkRunningDelay = 300
 
 func TestRun(t *testing.T) {
 	cfg, err := configuration.TestConfiguration()
@@ -29,7 +29,7 @@ func TestRun(t *testing.T) {
 		t.Error(err)
 	}
 
-	time.Sleep(CHECK_RUNNING_DELAY * time.Millisecond)
+	time.Sleep(checkRunningDelay * time.Millisecond)
 
 	if err := runPassed(reloader); err != nil {
 		t.Error(err)
