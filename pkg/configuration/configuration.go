@@ -24,10 +24,10 @@ type Configuration struct {
 	RelSrcDir        string   `toml:"relative_source_dir"`
 	RelBuildDir      string   `toml:"relative_build_dir"`
 	RelLogDir        string   `toml:"relative_log_dir"`
-	IncludeExts      []string `toml:"watch_relative_ext"`
-	ExcludeDirs      []string `toml:"ignore_relative_dir"`
-	IncludeDirs      []string `toml:"watch_relative_dir"`
-	IgnoreFiles      []string `toml:"ignore_relative_files"`
+	IncludeExts      []string `toml:"include_exts"`
+	ExcludeDirs      []string `toml:"exclude_relative_dirs"`
+	IncludeDirs      []string `toml:"include_relative_dirs"`
+	ExcludeFiles     []string `toml:"exclude_relative_files"`
 	EventBufferTime  int
 	Port             int `toml:"port"`
 	Root             string
@@ -48,7 +48,7 @@ func DefaultConfiguration() *Configuration {
 		IncludeExts:      []string{"go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"},
 		ExcludeDirs:      []string{"assets", "tmp", "vendor", "node_modules", "build"},
 		IncludeDirs:      []string{},
-		IgnoreFiles:      []string{},
+		ExcludeFiles:     []string{},
 		EventBufferTime:  100,
 		ExecutionCommand: "",
 		Port:             3000,

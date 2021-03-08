@@ -100,7 +100,7 @@ func (f *Filter) IsExcludedFile(path string) (bool, error) {
 }
 
 func (f *Filter) IsIgnoredFile(path string) (bool, error) {
-	for _, f := range f.config.IgnoreFiles {
+	for _, f := range f.config.ExcludeFiles {
 		absIgnoredFile, err := utils.CurrentAbsolutePath(f)
 		if err != nil {
 			return false, err

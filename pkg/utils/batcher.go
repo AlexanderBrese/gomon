@@ -34,7 +34,7 @@ func NewBatcher(interval time.Duration) (*Batcher, error) {
 }
 
 func (b *Batcher) run() {
-	tick := time.Tick(b.interval)
+	tick := time.NewTicker(b.interval)
 	evs := make([]fsnotify.Event, 0)
 	errs := make([]error, 0)
 OuterLoop:
@@ -44,7 +44,7 @@ OuterLoop:
 			evs = append(evs, ev)
 		case err := <-b.Watcher.Errors:
 			errs = append(errs, err)
-		case <-tick:
+		case <-tick.C:
 			if len(evs) != 0 {
 				b.Events <- evs
 				evs = make([]fsnotify.Event, 0)

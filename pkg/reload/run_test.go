@@ -25,7 +25,12 @@ func TestRun(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer runCleanup(reloader)
+	defer func() {
+		if err := runCleanup(reloader); err != nil {
+			// TODO: log
+			return
+		}
+	}()
 
 	if err := runStart(reloader); err != nil {
 		t.Error(err)

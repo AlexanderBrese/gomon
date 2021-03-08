@@ -1,5 +1,7 @@
 # gomon [![Go](https://github.com/cosmtrek/AlexanderBrese/gomon/Go/badge.svg)](https://github.com/AlexanderBrese/gomon/actions?query=workflow%3AGo+branch%3Amaster) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/217fd7aa6f224b8d8094c833d4c5b07a)](https://www.codacy.com/gh/AlexanderBrese/gomon/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=AlexanderBrese/gomon&amp;utm_campaign=Badge_Grade) [![Go Report Card](https://goreportcard.com/badge/github.com/AlexanderBrese/gomon)](https://goreportcard.com/report/github.com/AlexanderBrese/gomon) [![codecov](https://codecov.io/gh/AlexanderBrese/gomon/branch/master/graph/badge.svg)](https://codecov.io/gh/AlexanderBrese/gomon)
 
+![how-does-it-work](https://github.com/AlexanderBrese/gomon/blob/master/docs/gomon.gif)
+
 # Why is it necessary?
 
 Because it also refreshes the `browser` upon change.
@@ -7,7 +9,6 @@ Because it also refreshes the `browser` upon change.
 # How does it work?
 
 Plain: Watches for code changes, reloads the specified binary e.g. a webserver and calls the client through a websocket to reload.<br><br>
-![how-does-it-work](https://github.com/AlexanderBrese/gomon/blob/master/docs/gomon.gif)
 
 # Usage
 
@@ -79,13 +80,13 @@ relative_log_dir = "tmp"
 # The port used for the browser syncing server
 port = 3000
 # Watch these extensions for changes
-watch_relative_ext = ["go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"]
+include_exts = ["go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"]
 # Watch these directories for changes
-watch_relative_dir = []
+include_relative_dirs = []
 # Ignore these files
-ignore_relative_files = []
+exclude_relative_files = []
 # Ignore these directories
-ignore_relative_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
+exclude_relative_dirs = ["assets", "tmp", "vendor", "node_modules", "build"]
 ```
 
 # What features is it going to provide?
