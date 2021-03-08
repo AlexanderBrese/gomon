@@ -4,15 +4,19 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 	"github.com/imdario/mergo"
 	"github.com/pelletier/go-toml"
 )
 
-// ParsedConfiguration parses a configuration file and merges it with the default configuration
+// ParsedConfiguration is a parsed configuration merged with the default configuration and adapted to the OS
 func ParsedConfiguration(path string) (*Configuration, error) {
 	if path == "" {
-		return DefaultConfiguration(), nil
+		cfg := DefaultConfiguration()
+		if err := adapt(cfg); err != nil {
+			return nil, err
+		}
+		return cfg, nil
 	} else if err := utils.CheckPath(path); err != nil {
 		return nil, err
 	} else {
@@ -48,7 +52,7 @@ func parse(path string) (cfg *Configuration, err error) {
 }
 
 func validate(cfg *Configuration) error {
-	absPath, err := utils.AbsolutePath(cfg.RelSrcDir)
+	absPath, err := utils.CurrentAbsolutePath(cfg.RelSrcDir)
 	if err != nil {
 		return err
 	}
@@ -59,6 +63,7 @@ func merge(cfg *Configuration) error {
 	return mergo.Merge(cfg, DefaultConfiguration())
 }
 
+// Adapt to OS
 func adapt(cfg *Configuration) error {
 	if runtime.GOOS == PlatformWindows {
 		extName := ".exe"

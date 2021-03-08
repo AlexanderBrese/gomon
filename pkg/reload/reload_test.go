@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
-const CHECK_RELOADING_DELAY = 600
+const checkReloadDelay = 600
 
 func TestReload(t *testing.T) {
 	cfg, err := configuration.TestConfiguration()
@@ -26,18 +26,18 @@ func TestReload(t *testing.T) {
 	defer runCleanup(reloader)
 
 	reloadStart(reloader)
-	time.Sleep(CHECK_RELOADING_DELAY * time.Millisecond)
+	time.Sleep(checkReloadDelay * time.Millisecond)
 	if err := reloadPassed(reloader); err != nil {
 		t.Error(err)
 	}
 }
 
 func reloadStart(reloader *Reload) {
-	reloader.Reload()
+	reloader.Run()
 }
 
 func reloadPassed(reloader *Reload) error {
-	binary, err := reloader.Configuration().Binary()
+	binary, err := reloader.config.Binary()
 	if err != nil {
 		return err
 	}

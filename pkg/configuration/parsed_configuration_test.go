@@ -3,17 +3,17 @@ package configuration
 import (
 	"testing"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 	"github.com/pelletier/go-toml"
 )
 
 func TestNoConfigProvided(t *testing.T) {
-	cfg, err := ParsedConfiguration("")
+	parsed, err := ParsedConfiguration("")
 	if err != nil {
 		t.Errorf("want: config, got: %q", err)
 	}
-	if cfg != DefaultConfiguration() {
-		t.Errorf("want: %q, got: %q", DefaultConfiguration(), cfg)
+	if parsed.Root == "" {
+		t.Error("want: root to contain a value, got: nothing")
 	}
 }
 
@@ -33,18 +33,18 @@ func TestInvalidSourcePathProvided(t *testing.T) {
 	}
 
 	dir := "test"
-	absDir, err := utils.AbsolutePath(dir)
+	absDir, err := utils.CurrentAbsolutePath(dir)
 	if err != nil {
 		t.Error(err)
 	}
-	err = utils.CreateDir(absDir)
-	defer utils.RemoveDir(absDir)
+	err = utils.CreateAllDir(absDir)
+	defer utils.RemoveAllDir(absDir)
 	if err != nil {
 		t.Error(err)
 	}
 
 	path := dir + "/test.toml"
-	absPath, err := utils.AbsolutePath(path)
+	absPath, err := utils.CurrentAbsolutePath(path)
 	if err != nil {
 		t.Error(err)
 	}
@@ -67,7 +67,7 @@ func TestConfigMerge(t *testing.T) {
 	}
 
 	path := "test.toml"
-	absPath, err := utils.AbsolutePath(path)
+	absPath, err := utils.CurrentAbsolutePath(path)
 	if err != nil {
 		t.Error(err)
 	}
@@ -75,7 +75,7 @@ func TestConfigMerge(t *testing.T) {
 		t.Error(err)
 	}
 
-	defer utils.RemoveDir(absPath)
+	defer utils.RemoveAllDir(absPath)
 
 	cfg, err := ParsedConfiguration(absPath)
 	if err != nil {

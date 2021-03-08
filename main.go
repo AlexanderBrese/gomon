@@ -7,54 +7,45 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/surveillance"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
+	"github.com/AlexanderBrese/GOATmon/pkg/surveillance"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
 var (
-	cfgPath string
-	sigs    chan os.Signal
+	sigs            chan os.Signal
+	changeDetection *surveillance.ChangeDetection
 )
 
 func init() {
+	cfgPath := parseInput()
+	cfg, err := parseConfig(cfgPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	initChangeDetection(cfg)
+}
+
+func parseInput() string {
+	var cfgPath string
 	flag.StringVar(&cfgPath, "c", "", "relative config path")
 	flag.Parse()
+	return cfgPath
 }
 
-func main() {
-	defer _recover()
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	cfg, err := parse(cfgPath)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	fileChanges, err := surveillance.NewFileChangesDetection(cfg)
+func initChangeDetection(cfg *configuration.Configuration) {
+	var err error
+	changeDetection, err = surveillance.NewChangeDetection(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := fileChanges.Init(); err != nil {
-		log.Fatal(err)
-	}
-	go func() {
-		<-sigs
-		fileChanges.StopWatching()
-	}()
-
-	if err := fileChanges.Surveil(); err != nil {
-		log.Fatal(err)
-	}
-
 }
 
-func parse(cfgPath string) (*configuration.Configuration, error) {
+func parseConfig(cfgPath string) (*configuration.Configuration, error) {
 	absPath := ""
 	if cfgPath != "" {
 		var err error
-		absPath, err = utils.AbsolutePath(cfgPath)
+		absPath, err = utils.CurrentAbsolutePath(cfgPath)
 		if err != nil {
 			return nil, err
 		}
@@ -67,8 +58,31 @@ func parse(cfgPath string) (*configuration.Configuration, error) {
 	return cfg, nil
 }
 
+func main() {
+	defer _recover()
+
+	prepareExit()
+	go onExit()
+
+	run()
+}
+
 func _recover() {
 	if e := recover(); e != nil {
 		log.Fatalf("PANIC: %+v", e)
 	}
+}
+
+func prepareExit() {
+	sigs = make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+}
+
+func onExit() {
+	<-sigs
+	changeDetection.Stop()
+}
+
+func run() {
+	changeDetection.Start()
 }

@@ -2,10 +2,21 @@ package reload
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
+)
+
+const (
+	testFile        = "test.go"
+	testFileContent = `package main
+	import "fmt"
+	func main() {
+		fmt.Println("hello world")
+	} 
+`
 )
 
 func TestBuild(t *testing.T) {
@@ -30,6 +41,23 @@ func TestBuild(t *testing.T) {
 	}
 }
 
+func prepareBuild(srcDir string, buildDir string) error {
+	if err := createSourceDir(srcDir); err != nil {
+		return err
+	}
+	if err := createSourceFile(srcDir); err != nil {
+		return err
+	}
+	return utils.CreateBuildDirIfNotExist(buildDir)
+}
+
+func cleanupBuild(relSrcDir string, relBuildDir string) error {
+	if err := removeSourceDir(relSrcDir); err != nil {
+		return err
+	}
+	return utils.RemoveRootBuildDir(relBuildDir)
+}
+
 func buildPrepare(cfg *configuration.Configuration) error {
 	srcDir, err := cfg.SrcDir()
 	if err != nil {
@@ -40,7 +68,7 @@ func buildPrepare(cfg *configuration.Configuration) error {
 		return err
 	}
 
-	return utils.PrepareBuild(srcDir, buildDir)
+	return prepareBuild(srcDir, buildDir)
 }
 
 func buildStart(reloader *Reload) error {
@@ -60,6 +88,19 @@ func buildPassed(cfg *configuration.Configuration) error {
 
 func buildCleanup(reloader *Reload) error {
 	reloader.BuildCleanup()
-	cfg := reloader.Configuration()
-	return utils.CleanupBuild(cfg.RelSrcDir, cfg.RelBuildDir)
+	cfg := reloader.config
+	return cleanupBuild(cfg.RelSrcDir, cfg.RelBuildDir)
+}
+
+func removeSourceDir(relSrcDir string) error {
+	return utils.RemoveRootDir(relSrcDir)
+}
+
+func createSourceDir(srcDir string) error {
+	return utils.CreateAllDir(srcDir)
+}
+
+func createSourceFile(srcDir string) error {
+	_, err := utils.CreateFile(filepath.Join(srcDir, testFile), []byte(testFileContent))
+	return err
 }

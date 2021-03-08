@@ -4,14 +4,14 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
 var root string
 
 func init() {
 	var err error
-	root, err = utils.RootPath()
+	root, err = utils.CurrentRootPath()
 	if err != nil {
 		panic(err)
 	}
@@ -28,13 +28,16 @@ type Configuration struct {
 	ExcludeDirs      []string `toml:"ignore_relative_dir"`
 	IncludeDirs      []string `toml:"watch_relative_dir"`
 	IgnoreFiles      []string `toml:"ignore_relative_files"`
-	bufferTime       int      `toml:"delay"`
-	Port             int      `toml:"port"`
+	EventBufferTime  int
+	Port             int `toml:"port"`
 	Root             string
 	ExecutionCommand string `toml:"execution_command"`
 	BuildCommand     string `toml:"build_command"`
+	Reload           bool
+	Sync             bool
 }
 
+// DefaultConfiguration is the default configuration if none is provided
 func DefaultConfiguration() *Configuration {
 	return &Configuration{
 		BuildName:        "main",
@@ -46,44 +49,56 @@ func DefaultConfiguration() *Configuration {
 		ExcludeDirs:      []string{"assets", "tmp", "vendor", "node_modules", "build"},
 		IncludeDirs:      []string{},
 		IgnoreFiles:      []string{},
-		bufferTime:       1000,
+		EventBufferTime:  1000,
 		ExecutionCommand: "",
 		Port:             3000,
 		Root:             root,
 		BuildCommand:     "go build -o",
+		Reload:           true,
+		Sync:             true,
 	}
 }
 
+// TestConfiguration is the configuration used for internal tests
 func TestConfiguration() (*Configuration, error) {
 	cfg := DefaultConfiguration()
 	cfg.IncludeExts = []string{}
 	cfg.ExcludeDirs = []string{"tmp", "build"}
+	cfg.Reload = false
+	cfg.Sync = false
+
 	if err := adapt(cfg); err != nil {
 		return nil, err
 	}
 	return cfg, nil
 }
 
+// BufferTime is the event buffer time in milliseconds
 func (c *Configuration) BufferTime() time.Duration {
-	return time.Duration(c.bufferTime) * time.Millisecond
+	return time.Duration(c.EventBufferTime) * time.Millisecond
 }
 
+// SrcDir is the current absolute source directory path
 func (c *Configuration) SrcDir() (string, error) {
-	return utils.AbsolutePath(c.RelSrcDir)
+	return utils.CurrentAbsolutePath(c.RelSrcDir)
 }
 
-func (c *Configuration) Binary() (string, error) {
-	return utils.AbsolutePath(filepath.Join(c.RelBuildDir, c.BuildName))
-}
-
+// BuildDir is the current absolute build directory path
 func (c *Configuration) BuildDir() (string, error) {
-	return utils.AbsolutePath(c.RelBuildDir)
+	return utils.CurrentAbsolutePath(c.RelBuildDir)
 }
 
+// LogDir is the current absolute log directory path
 func (c *Configuration) LogDir() (string, error) {
-	return utils.AbsolutePath(c.RelLogDir)
+	return utils.CurrentAbsolutePath(c.RelLogDir)
 }
 
+// Binary is the current absolute binary path
+func (c *Configuration) Binary() (string, error) {
+	return utils.CurrentAbsolutePath(filepath.Join(c.RelBuildDir, c.BuildName))
+}
+
+// Log is the current absolute log path
 func (c *Configuration) Log() (string, error) {
-	return utils.AbsolutePath(filepath.Join(c.RelLogDir, c.LogName))
+	return utils.CurrentAbsolutePath(filepath.Join(c.RelLogDir, c.LogName))
 }

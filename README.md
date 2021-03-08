@@ -1,6 +1,6 @@
 # Why is it necessary?
 
-Because it also reloads the `browser` upon change.
+Because it also refreshes the `browser` upon change.
 
 # How does it work?
 
@@ -16,7 +16,7 @@ Include the script below to your client e.g. a static main.js & change `YOUR_POR
 function tryConnectToReload(address) {
   var conn;
   // This is a statically defined port on which the app is hosting the reload service.
-  conn = new WebSocket("ws://localhost:YOUR_PORT");
+  conn = new WebSocket("ws://localhost:3000/sync");
 
   conn.onclose = function(evt) {
     // The reload endpoint hasn't been started yet, we are retrying in 2 seconds.
@@ -84,8 +84,6 @@ watch_relative_dir = []
 ignore_relative_files = []
 # Ignore these directories
 ignore_relative_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
-# Buffer changes before rebuilding for a certain amount of time (ms)
-buffer_time = 1000
 ```
 
 # What features is it going to provide?

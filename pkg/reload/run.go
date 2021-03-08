@@ -4,9 +4,10 @@ import (
 	"io"
 	"os"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
+// RunCleanup stops the run
 func (r *Reload) RunCleanup() {
 	utils.WithLock(&r.mu, func() {
 		if r.running {
@@ -22,6 +23,7 @@ func (r *Reload) run() error {
 	}
 	utils.WithLock(&r.mu, func() {
 		r.running = true
+		r.FinishedRunning <- true
 	})
 
 	go func() {

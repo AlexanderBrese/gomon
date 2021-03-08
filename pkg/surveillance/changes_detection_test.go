@@ -1,21 +1,47 @@
 package surveillance
 
 import (
-	"fmt"
+	"errors"
+	"math/rand"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/configuration"
-	"github.com/AlexanderBrese/go-server-browser-reload/pkg/utils"
+	"github.com/AlexanderBrese/GOATmon/pkg/configuration"
+	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
-const TEMP_FILE_CREATION_DELAY = 100
-const TEMP_FILE_CONTENT = "test"
+const (
+	tempFileCreationDelay  = 300
+	tempFileContent        = "test"
+	changeDetectionTimeout = 800
+)
 
-func TestFileChangesDetection(t *testing.T) {
+type Test struct {
+	name             string
+	cfg              *configuration.Configuration
+	relPath          string
+	shouldBeDetected bool
+}
+
+func TestChangeDetection(t *testing.T) {
+	tests := testSuite()
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(tests), func(i, j int) { tests[i], tests[j] = tests[j], tests[i] })
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := detect(tt.cfg, tt.relPath, tt.shouldBeDetected); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+}
+
+func testSuite() []Test {
 	defaultCfg := configuration.DefaultConfiguration()
+	defaultCfg.Reload = false
+	defaultCfg.Sync = false
 	customExtsCfg, _ := configuration.TestConfiguration()
 	customExtsCfg.IncludeExts = append(customExtsCfg.IncludeExts, "custom")
 	customIgnoredDirCfg, _ := configuration.TestConfiguration()
@@ -39,99 +65,77 @@ func TestFileChangesDetection(t *testing.T) {
 	customWatchedDirAndWatchedExt.IncludeDirs = append(customWatchedDirAndWatchedExt.IncludeDirs, "watched")
 	customWatchedDirAndWatchedExt.IncludeExts = append(customWatchedDirAndWatchedExt.IncludeExts, "go")
 
-	tests := []struct {
-		name             string
-		cfg              *configuration.Configuration
-		relPath          string
-		shouldBeDetected bool
-	}{
+	return []Test{
 		{"Files in an ignored folder should not be detected.", customIgnoredDirCfg, "ignored/test.go", false},
+		{"A file in an ignored and watched dir should not be detected.", customIgnoredAndIncludedDirCfg, "watched/test.go", false},
 		{"An ignored file inside a watched directory should not be detected.", customIgnoredFileAndWatchedDirCfg, "watched/ignored.go", false},
 		{"A file with a valid extension should be detected.", defaultCfg, "test.go", true},
-
 		{"A file with a valid extension inside a watched directory should be detected.", customWatchedDirAndWatchedExt, "watched/test.go", true},
 		{"A file with an invalid extension inside a watched directory should not be detected.", customWatchedDirAndWatchedExt, "watched/test.custom", false},
-
 		{"Files outside the ignored folder should be detected.", customIgnoredDirCfg, "test.go", true},
-
 		{"A file with a valid custom extension should be detected.", customExtsCfg, "test.custom", true},
 		{"A file with an invalid custom extension should not be detected.", customExtsCfg, "test.go", false},
-
 		{"A file in a watched directory should be detected.", customIncludeDirCfg, "watched/test.go", true},
-
+		{"A file outside of a watched directory should not be detected.", customIncludeDirCfg, "other/test.go", false},
 		{"An ignored file should not be detected.", customIgnoredFileCfg, "ignored.go", false},
-
-		{"A file in an ignored and watched dir should not be detected.", customIgnoredAndIncludedDirCfg, "watched/test.go", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := fileChanges(tt.cfg, tt.relPath, tt.shouldBeDetected); err != nil {
-				t.Error(err)
-			}
-		})
 	}
 }
 
-func fileChanges(cfg *configuration.Configuration, relChangedFile string, shouldBeDetected bool) error {
-	changedFile := filepath.Join(cfg.Root, relChangedFile)
-	if isInsideDir(relChangedFile) {
-		dir, err := dir(relChangedFile)
-		if err != nil {
-			return err
-		}
-		defer delete(dir)
-	} else {
-		defer delete(changedFile)
-	}
-
-	fileChanges, err := NewFileChangesDetection(cfg)
+func detect(cfg *configuration.Configuration, relFile string, shouldBeDetected bool) error {
+	changeDetection, err := NewChangeDetection(cfg)
 	if err != nil {
 		return err
 	}
+	subscription := subscribe(changeDetection)
+	go changeDetection.Start()
 
-	fileChangesSubscription := subscribe(fileChanges)
-	if err := watch(fileChanges); err != nil {
+	file := filepath.Join(cfg.Root, relFile)
+	defer cleanup(file, relFile, subscription, changeDetection)
+
+	if err := do(relFile, file); err != nil {
 		return err
 	}
-	if err := change(relChangedFile, changedFile); err != nil {
-		return err
-	}
-	if err := result(fileChangesSubscription, fileChanges, changedFile, shouldBeDetected); err != nil {
+	if err := check(subscription, shouldBeDetected); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func subscribe(fileChanges *FileChangesDetection) chan string {
-	fileChangesSubscription := make(chan string, 1)
-	fileChanges.Subscribe(fileChangesSubscription)
-	return fileChangesSubscription
-}
-
-func watch(fileChanges *FileChangesDetection) error {
-	if err := fileChanges.Init(); err != nil {
-		return err
-	}
-	go fileChanges.Surveil()
-
-	return nil
-}
-
-func delete(changedFile string) error {
-	return utils.RemoveDir(changedFile)
-}
-
-func change(relChangedFile string, changedFile string) error {
-	if isInsideDir(relChangedFile) {
-		dir, err := dir(relChangedFile)
+func cleanup(file string, relFile string, sub chan bool, cd *ChangeDetection) error {
+	cd.Stop()
+	close(sub)
+	if isInsideDir(relFile) {
+		dir, err := dir(relFile)
 		if err != nil {
 			return err
 		}
-		go createTemporaryDirectoryAndFile(dir, changedFile)
+		delete(dir)
 	} else {
-		go createTemporaryFile(changedFile)
+		delete(file)
+	}
+	return nil
+}
+
+func subscribe(cd *ChangeDetection) chan bool {
+	subscription := make(chan bool, 1)
+	cd.Subscribe(subscription)
+	return subscription
+}
+
+func delete(changedFile string) error {
+	return utils.RemoveAllDir(changedFile)
+}
+
+func do(relFile string, file string) error {
+	if isInsideDir(relFile) {
+		dir, err := dir(relFile)
+		if err != nil {
+			return err
+		}
+		go createTemporaryDirectoryAndFile(dir, file)
+	} else {
+		go createTemporaryFile(file)
 	}
 
 	return nil
@@ -139,7 +143,7 @@ func change(relChangedFile string, changedFile string) error {
 
 func dir(path string) (string, error) {
 	relDir := strings.Split(path, "/")[0]
-	dir, err := utils.AbsolutePath(relDir)
+	dir, err := utils.CurrentAbsolutePath(relDir)
 	if err != nil {
 		return "", err
 	}
@@ -154,7 +158,7 @@ func createTemporaryDirectoryAndFile(dir string, file string) error {
 	if err := createTemporaryDirectory(dir); err != nil {
 		return err
 	}
-	time.Sleep(TEMP_FILE_CREATION_DELAY * time.Millisecond)
+	time.Sleep(tempFileCreationDelay * time.Millisecond)
 	if err := createTemporaryFile(file); err != nil {
 		return err
 	}
@@ -163,7 +167,7 @@ func createTemporaryDirectoryAndFile(dir string, file string) error {
 }
 
 func createTemporaryDirectory(path string) error {
-	if err := utils.CreateDir(path); err != nil {
+	if err := utils.CreateAllDir(path); err != nil {
 		return err
 	}
 
@@ -171,37 +175,29 @@ func createTemporaryDirectory(path string) error {
 }
 
 func createTemporaryFile(path string) error {
-	if _, err := utils.CreateFile(path, []byte(TEMP_FILE_CONTENT)); err != nil {
+	if _, err := utils.CreateFile(path, []byte(tempFileContent)); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func result(fileChangesSubscription chan string, fileChanges *FileChangesDetection, changedFile string, shouldBeDetected bool) error {
+func check(sub chan bool, shouldBeDetected bool) error {
 	for {
 		select {
-		case watchedFile := <-fileChangesSubscription:
-			clear(fileChangesSubscription, fileChanges)
-
-			return check(watchedFile, changedFile, shouldBeDetected)
+		case detected, ok := <-sub:
+			if !ok {
+				return nil
+			}
+			if !shouldBeDetected && detected {
+				return errors.New("error: expected no change detection got change detection")
+			}
+			if shouldBeDetected && !detected {
+				return errors.New("error: expected change detection got no change detection")
+			}
+			return nil
+		case <-time.After(changeDetectionTimeout * time.Millisecond):
+			return nil
 		}
 	}
-}
-
-func clear(fileChangesSubscription chan string, fileChanges *FileChangesDetection) {
-	close(fileChangesSubscription)
-	fileChanges.StopWatching()
-}
-
-func check(watchedFile string, changedFile string, shouldBeDetected bool) error {
-	butWasDetected := watchedFile == changedFile
-	if !shouldBeDetected && butWasDetected {
-		return fmt.Errorf("error: a file change should not be detected at %s", changedFile)
-	}
-	if shouldBeDetected && !butWasDetected {
-		return fmt.Errorf("error: a file change should be detected at %s", changedFile)
-	}
-
-	return nil
 }
