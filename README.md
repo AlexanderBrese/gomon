@@ -1,3 +1,5 @@
+# gomon [![Go](https://github.com/cosmtrek/AlexanderBrese/gomon/Go/badge.svg)](https://github.com/AlexanderBrese/gomon/actions?query=workflow%3AGo+branch%3Amaster) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/217fd7aa6f224b8d8094c833d4c5b07a)](https://www.codacy.com/gh/AlexanderBrese/gomon/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=AlexanderBrese/gomon&amp;utm_campaign=Badge_Grade) [![Go Report Card](https://goreportcard.com/badge/github.com/AlexanderBrese/gomon)](https://goreportcard.com/report/github.com/AlexanderBrese/gomon) [![codecov](https://codecov.io/gh/cosmtrek/air/branch/master/graph/badge.svg)](https://codecov.io/gh/cosmtrek/air)
+
 # Why is it necessary?
 
 Because it also refreshes the `browser` upon change.
@@ -5,7 +7,7 @@ Because it also refreshes the `browser` upon change.
 # How does it work?
 
 Plain: Watches for code changes, reloads the specified binary e.g. a webserver and calls the client through a websocket to reload.<br><br>
-![how-does-it-work](https://github.com/AlexanderBrese/gomon/blob/main/gomon.gif)
+![how-does-it-work](https://github.com/AlexanderBrese/gomon/blob/main/docs/gomon.gif)
 
 # Usage
 
