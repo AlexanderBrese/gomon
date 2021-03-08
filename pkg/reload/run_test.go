@@ -14,6 +14,8 @@ const checkRunningDelay = 300
 
 func TestRun(t *testing.T) {
 	cfg, err := configuration.TestConfiguration()
+	cfg.RelSrcDir = "cmd/web"
+
 	if err != nil {
 		t.Error(err)
 	}

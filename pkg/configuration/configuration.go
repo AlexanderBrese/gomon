@@ -41,8 +41,8 @@ type Configuration struct {
 func DefaultConfiguration() *Configuration {
 	return &Configuration{
 		BuildName:        "main",
-		LogName:          "GOATmon.log",
-		RelSrcDir:        "cmd/web",
+		LogName:          "Gomon.log",
+		RelSrcDir:        "",
 		RelBuildDir:      "tmp/build",
 		RelLogDir:        "tmp",
 		IncludeExts:      []string{"go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"},
@@ -64,6 +64,7 @@ func TestConfiguration() (*Configuration, error) {
 	cfg := DefaultConfiguration()
 	cfg.IncludeExts = []string{}
 	cfg.ExcludeDirs = []string{"tmp", "build"}
+
 	cfg.Reload = false
 	cfg.Sync = false
 

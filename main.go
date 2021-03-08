@@ -12,33 +12,48 @@ import (
 	"github.com/AlexanderBrese/GOATmon/pkg/utils"
 )
 
-var (
-	sigs            chan os.Signal
-	changeDetection *surveillance.ChangeDetection
-)
+var cfgPath string
 
 func init() {
-	cfgPath := parseInput()
+	flag.StringVar(&cfgPath, "c", "", "relative config path")
+	flag.Parse()
+}
+
+func main() {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	defer _recover()
+
 	cfg, err := parseConfig(cfgPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	initChangeDetection(cfg)
-}
-
-func parseInput() string {
-	var cfgPath string
-	flag.StringVar(&cfgPath, "c", "", "relative config path")
-	flag.Parse()
-	return cfgPath
-}
-
-func initChangeDetection(cfg *configuration.Configuration) {
-	var err error
-	changeDetection, err = surveillance.NewChangeDetection(cfg)
+	cd, err := changeDetection(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	go func() {
+		<-sigs
+		//<-time.After(2 * time.Second)
+		cd.Stop()
+	}()
+
+	cd.Start()
+}
+
+func _recover() {
+	if e := recover(); e != nil {
+		log.Fatalf("PANIC: %+v", e)
+	}
+}
+
+func changeDetection(cfg *configuration.Configuration) (*surveillance.Gomon, error) {
+	changeDetection, err := surveillance.NewGomon(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return changeDetection, nil
 }
 
 func parseConfig(cfgPath string) (*configuration.Configuration, error) {
@@ -56,33 +71,4 @@ func parseConfig(cfgPath string) (*configuration.Configuration, error) {
 	}
 
 	return cfg, nil
-}
-
-func main() {
-	defer _recover()
-
-	prepareExit()
-	go onExit()
-
-	run()
-}
-
-func _recover() {
-	if e := recover(); e != nil {
-		log.Fatalf("PANIC: %+v", e)
-	}
-}
-
-func prepareExit() {
-	sigs = make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-}
-
-func onExit() {
-	<-sigs
-	changeDetection.Stop()
-}
-
-func run() {
-	changeDetection.Start()
 }

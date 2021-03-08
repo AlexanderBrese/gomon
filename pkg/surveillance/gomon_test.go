@@ -25,7 +25,7 @@ type Test struct {
 	shouldBeDetected bool
 }
 
-func TestChangeDetection(t *testing.T) {
+func TestGomon(t *testing.T) {
 	tests := testSuite()
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(tests), func(i, j int) { tests[i], tests[j] = tests[j], tests[i] })
@@ -82,7 +82,7 @@ func testSuite() []Test {
 }
 
 func detect(cfg *configuration.Configuration, relFile string, shouldBeDetected bool) error {
-	changeDetection, err := NewChangeDetection(cfg)
+	changeDetection, err := NewGomon(cfg)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func detect(cfg *configuration.Configuration, relFile string, shouldBeDetected b
 	return nil
 }
 
-func cleanup(file string, relFile string, sub chan bool, cd *ChangeDetection) error {
+func cleanup(file string, relFile string, sub chan bool, cd *Gomon) error {
 	cd.Stop()
 	close(sub)
 	if isInsideDir(relFile) {
@@ -117,7 +117,7 @@ func cleanup(file string, relFile string, sub chan bool, cd *ChangeDetection) er
 	return nil
 }
 
-func subscribe(cd *ChangeDetection) chan bool {
+func subscribe(cd *Gomon) chan bool {
 	subscription := make(chan bool, 1)
 	cd.Subscribe(subscription)
 	return subscription

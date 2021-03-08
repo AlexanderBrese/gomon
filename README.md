@@ -42,21 +42,21 @@ try {
 }
 ```
 
-## install GOATmon
+## install Gomon
 
 ```
-go get -u github.com/AlexanderBrese/GOATmon
+go get -u github.com/AlexanderBrese/Gomon
 ```
 
-## run GOATmon 
+## run Gomon 
 
 If you want to configure the reload behavior or set change paths then just provide a `configuration` to the process.
 
 ```
-GOATmon [-c PATH_TO_YOUR_CONFIG]
+Gomon [-c PATH_TO_YOUR_CONFIG]
 ```
 
-## configure GOATmon
+## configure Gomon
 
 `Default` configuration:
 ```toml
@@ -67,13 +67,13 @@ build_command = "go build -o"
 # How should the build be run?
 execution_command = "./tmp/build/main"
 # What should the log be named?
-log_name = "GOATmon.log"
+log_name = "Gomon.log"
 # What should we built from?
-relative_source_dir = "cmd/web"
+relative_source_dir = ""
 # Where should the build be stored?
 relative_build_dir = "tmp/build"
 # Where should the log be stored?
-relative_log_dir = "tmp/GOATmon.log"
+relative_log_dir = "tmp/Gomon.log"
 # The port used for the browser syncing server
 port = 3000
 # Watch these extensions for changes

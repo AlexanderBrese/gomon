@@ -14,6 +14,8 @@ const checkReloadDelay = 600
 
 func TestReload(t *testing.T) {
 	cfg, err := configuration.TestConfiguration()
+	cfg.RelSrcDir = "cmd/web"
+
 	if err != nil {
 		t.Error(err)
 	}

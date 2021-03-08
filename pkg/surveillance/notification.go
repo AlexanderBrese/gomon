@@ -18,6 +18,13 @@ func NewSubscriberNotification(sub chan bool) *Notification {
 	}
 }
 
+func (n *Notification) Stop() {
+	close(n.change)
+	if n.subscription != nil {
+		close(n.subscription)
+	}
+}
+
 func (n *Notification) NotfiyChange() {
 	n.change <- true
 	if n.subscription != nil {

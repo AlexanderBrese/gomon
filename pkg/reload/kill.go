@@ -13,6 +13,8 @@ func (r *Reload) kill(cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser)
 	defer func() {
 		stdout.Close()
 		stderr.Close()
+		r.FinishedKilling <- true
+		r.removeBinary()
 	}()
 
 	var err error
@@ -26,9 +28,7 @@ func (r *Reload) kill(cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser)
 	utils.WithLock(&r.mu, func() {
 		r.running = false
 	})
-	if err := r.removeBinary(); err != nil {
-		return err
-	}
+
 	return nil
 }
 

@@ -12,6 +12,9 @@ type Environment struct {
 	detector *utils.Batcher
 	reloader *reload.Reload
 	sync     *browsersync.Server
+
+	stopDetecting  chan bool
+	stopRefreshing chan bool
 }
 
 func NewEnvironment(cfg *configuration.Configuration) (*Environment, error) {
@@ -19,48 +22,45 @@ func NewEnvironment(cfg *configuration.Configuration) (*Environment, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &Environment{
-		config:   cfg,
-		detector: batcher,
+	e := &Environment{
+		config:         cfg,
+		detector:       batcher,
+		stopDetecting:  make(chan bool, 1),
+		stopRefreshing: make(chan bool, 1),
 	}
 
 	if cfg.Reload {
-		s.reloader = reload.NewReload(cfg)
-	}
-
-	if cfg.Sync {
-		s.sync = browsersync.NewServer(cfg.Port)
-	}
-
-	return s, nil
-}
-
-func (s *Environment) Teardown() {
-	s.detector.Close()
-	if s.config.Reload {
-		s.reloader.Cleanup()
-	}
-
-	if s.config.Sync {
-		s.sync.Stop()
-	}
-}
-
-func (s *Environment) Run() error {
-	if s.config.Reload {
-		if err := s.checkRunEnvironment(); err != nil {
-			return err
+		e.reloader = reload.NewReload(cfg)
+		if err := e.checkRunEnvironment(); err != nil {
+			return nil, err
 		}
 	}
 
-	if s.config.Sync {
-		s.sync.Start()
+	if cfg.Sync {
+		e.sync = browsersync.NewServer(cfg.Port)
+		e.sync.Start()
 	}
-	return nil
+
+	return e, nil
 }
 
-func (s *Environment) checkRunEnvironment() error {
-	buildDir, err := s.config.BuildDir()
+func (e *Environment) Teardown() {
+	if e.config.Reload {
+		e.reloader.Cleanup()
+		<-e.reloader.FinishedKilling
+	}
+
+	if e.config.Sync {
+		e.sync.Stop()
+	}
+
+	e.detector.Close()
+	e.stopDetecting <- true
+	e.stopRefreshing <- true
+}
+
+func (e *Environment) checkRunEnvironment() error {
+	buildDir, err := e.config.BuildDir()
 	if err != nil {
 		return err
 	}

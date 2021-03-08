@@ -52,8 +52,8 @@ func communicate(hub *Hub, w http.ResponseWriter, r *http.Request) error {
 
 // Unregisters from the hub and closes the connection
 func (c *Client) close() {
-	c.hub.unregister <- c
 	c.conn.Close()
+	close(c.outboundMessage)
 }
 
 // Writes message from the hub to the socket
@@ -61,7 +61,6 @@ func (c *Client) writeToSocket() error {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.close()
 	}()
 	for {
 		select {

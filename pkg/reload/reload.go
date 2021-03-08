@@ -16,6 +16,7 @@ type Reload struct {
 	stop            chan bool
 	stopRunning     chan bool
 	FinishedRunning chan bool
+	FinishedKilling chan bool
 }
 
 // NewReload creates a new Reload with the config provided
@@ -27,6 +28,7 @@ func NewReload(cfg *configuration.Configuration) *Reload {
 		stop:            make(chan bool, 1),
 		stopRunning:     make(chan bool),
 		FinishedRunning: make(chan bool, 1),
+		FinishedKilling: make(chan bool, 1),
 	}
 }
 

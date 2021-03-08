@@ -78,11 +78,9 @@ func CreateAllDirIfNotExist(path string) error {
 // RemoveFileIfExist removes a file if it does already exist at the path provided
 func RemoveFileIfExist(path string) error {
 	if err := CheckPath(path); err != nil {
-		if err = RemoveFile(path); err != nil {
-			return err
-		}
+		return err
 	}
-	return nil
+	return RemoveFile(path)
 }
 
 // CreateFile creates a file with the given content at the path provided

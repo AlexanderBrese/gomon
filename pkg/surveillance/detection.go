@@ -33,6 +33,9 @@ func NewDetection(env *Environment, n *Notification) (*Detection, error) {
 func (d *Detection) Run() error {
 	for {
 		select {
+		case <-d.environment.stopDetecting:
+			close(d.environment.stopDetecting)
+			return nil
 		case evs, ok := <-d.environment.detector.Events:
 			if !ok {
 				return nil

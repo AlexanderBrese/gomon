@@ -11,37 +11,40 @@ type Hub struct {
 	// Register a new client
 	register chan *Client
 
-	// Unregister a client
-	unregister chan *Client
+	stopListening chan bool
 }
 
 // NewHub creates a new Hub
 func NewHub() *Hub {
 	return &Hub{
-		clients:    make(map[*Client]bool),
-		broadcast:  make(chan []byte),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
+		clients:       make(map[*Client]bool),
+		broadcast:     make(chan []byte),
+		register:      make(chan *Client),
+		stopListening: make(chan bool, 1),
 	}
 }
 
 func (h *Hub) stop() {
 	for client := range h.clients {
-		client.close()
+		h.unregisterClient(client)
 	}
+	h.stopListening <- true
 }
 
 func (h *Hub) listen() {
+OuterLoop:
 	for {
 		select {
+		case <-h.stopListening:
+			break OuterLoop
 		case client := <-h.register:
 			h.registerClient(client)
-		case client := <-h.unregister:
-			h.unregisterClient(client)
 		case message := <-h.broadcast:
 			h.broadcastMessage(message)
 		}
 	}
+	close(h.stopListening)
+
 }
 
 func (h *Hub) registerClient(client *Client) {
@@ -49,10 +52,8 @@ func (h *Hub) registerClient(client *Client) {
 }
 
 func (h *Hub) unregisterClient(client *Client) {
-	if _, ok := h.clients[client]; ok {
-		delete(h.clients, client)
-		close(client.outboundMessage)
-	}
+	delete(h.clients, client)
+	client.close()
 }
 
 func (h *Hub) broadcastMessage(message []byte) {
@@ -60,8 +61,7 @@ func (h *Hub) broadcastMessage(message []byte) {
 		select {
 		case client.outboundMessage <- message:
 		default:
-			close(client.outboundMessage)
-			delete(h.clients, client)
+			h.unregisterClient(client)
 		}
 	}
 }
