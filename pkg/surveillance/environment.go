@@ -3,6 +3,7 @@ package surveillance
 import (
 	"github.com/AlexanderBrese/gomon/pkg/browsersync"
 	"github.com/AlexanderBrese/gomon/pkg/configuration"
+	"github.com/AlexanderBrese/gomon/pkg/logging"
 	"github.com/AlexanderBrese/gomon/pkg/reload"
 	"github.com/AlexanderBrese/gomon/pkg/utils"
 )
@@ -12,6 +13,7 @@ type Environment struct {
 	detector *utils.Batcher
 	reloader *reload.Reload
 	sync     *browsersync.Server
+	logger   *logging.Logger
 
 	stopDetecting  chan bool
 	stopRefreshing chan bool
@@ -25,19 +27,20 @@ func NewEnvironment(cfg *configuration.Configuration) (*Environment, error) {
 	e := &Environment{
 		config:         cfg,
 		detector:       batcher,
+		logger:         logging.NewLogger(cfg),
 		stopDetecting:  make(chan bool, 1),
 		stopRefreshing: make(chan bool, 1),
 	}
 
 	if cfg.Reload {
-		e.reloader = reload.NewReload(cfg)
+		e.reloader = reload.NewReload(cfg, e.logger)
 		if err := e.checkRunEnvironment(); err != nil {
 			return nil, err
 		}
 	}
 
 	if cfg.Sync {
-		e.sync = browsersync.NewServer(cfg.Port)
+		e.sync = browsersync.NewServer(cfg.Build.Port, e.logger)
 		e.sync.Start()
 	}
 

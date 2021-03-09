@@ -19,6 +19,9 @@ type Batcher struct {
 // NewBatcher creates and runs a Batcher with the given time interval.
 func NewBatcher(interval time.Duration) (*Batcher, error) {
 	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, err
+	}
 
 	batcher := &Batcher{}
 	batcher.Watcher = watcher
@@ -26,9 +29,7 @@ func NewBatcher(interval time.Duration) (*Batcher, error) {
 	batcher.done = make(chan struct{}, 1)
 	batcher.Events = make(chan []fsnotify.Event, 1)
 
-	if err == nil {
-		go batcher.run()
-	}
+	go batcher.run()
 
 	return batcher, err
 }

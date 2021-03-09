@@ -4,24 +4,27 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/AlexanderBrese/gomon/pkg/logging"
 )
 
 const route = "/sync"
 
 // Server serves a REST route the client connects to receive sync messages
 type Server struct {
-	hub *Hub
-	srv *http.Server
+	hub    *Hub
+	srv    *http.Server
+	logger *logging.Logger
 }
 
 // NewServer creates a new Server with the port provided
-func NewServer(port int) *Server {
+func NewServer(port int, l *logging.Logger) *Server {
 	return &Server{
-		hub: NewHub(),
-		srv: &http.Server{Addr: fmt.Sprintf(":%d", port)},
+		hub:    NewHub(),
+		srv:    &http.Server{Addr: fmt.Sprintf(":%d", port)},
+		logger: l,
 	}
 }
 
@@ -49,7 +52,7 @@ func (s *Server) Stop() error {
 func (s *Server) setupRoute() {
 	http.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
 		if err := communicate(s.hub, w, r); err != nil {
-			// TODO: log
+			s.logger.Main("error: failed to setup route: %s", err)
 			return
 		}
 	})
@@ -62,9 +65,9 @@ func (s *Server) startHub() {
 func (s *Server) startServer() {
 	go func() {
 		if err := s.srv.ListenAndServe(); err != nil {
-			// TODO: log
+			s.logger.Main("error: failed to serve sync server: %s", err)
 			return
 		}
-		log.Println("Serving sync server at", s.srv.Addr)
+		s.logger.Sync("Serving sync server at: %s", s.srv.Addr)
 	}()
 }

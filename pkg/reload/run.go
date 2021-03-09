@@ -2,8 +2,8 @@ package reload
 
 import (
 	"io"
-	"os"
 
+	"github.com/AlexanderBrese/gomon/pkg/logging"
 	"github.com/AlexanderBrese/gomon/pkg/utils"
 )
 
@@ -17,24 +17,25 @@ func (r *Reload) RunCleanup() {
 }
 
 func (r *Reload) run() error {
-	cmd, stdout, stderr, err := r.StartCmd(r.config.ExecutionCommand)
+	cmd, stdout, stderr, err := r.StartCmd(r.config.Build.ExecutionCommand)
 	if err != nil {
 		return err
 	}
 
 	r.FinishedRunning <- true
+	r.logger.Run("%s", "running")
 	utils.WithLock(&r.mu, func() {
 		r.running = true
 	})
 
 	go func() {
-		_, _ = io.Copy(os.Stdout, stdout)
-		_, _ = io.Copy(os.Stderr, stderr)
+		_, _ = io.Copy(&logging.RunWriter{Logger: r.logger}, stdout)
+		_, _ = io.Copy(&logging.ErrorWriter{Logger: r.logger}, stderr)
 	}()
 
 	go func() {
 		if err := r.kill(cmd, stdout, stderr); err != nil {
-			// TODO: log
+			r.logger.Main("error: during kill: %s", err)
 			return
 		}
 	}()

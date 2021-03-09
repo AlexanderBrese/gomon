@@ -1,9 +1,5 @@
 package surveillance
 
-import (
-	"fmt"
-)
-
 type Refresh struct {
 	environment  *Environment
 	notification *Notification
@@ -37,7 +33,7 @@ func (c *Refresh) Run() {
 }
 
 func (c *Refresh) log() {
-	fmt.Println("change detected")
+	c.environment.logger.Detection("%s", "change detected")
 }
 
 func (c *Refresh) reload() {

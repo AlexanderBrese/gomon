@@ -3,7 +3,8 @@ package reload
 import (
 	"fmt"
 	"io"
-	"os"
+
+	"github.com/AlexanderBrese/gomon/pkg/utils"
 )
 
 // BuildCleanup stops the build
@@ -24,7 +25,7 @@ func (r *Reload) build() error {
 	if err != nil {
 		return err
 	}
-	buildCmd := fmt.Sprintf("%s %s %s", r.config.BuildCommand, binary, srcDir)
+	buildCmd := fmt.Sprintf("%s %s %s", r.config.Build.Command, binary, srcDir)
 	cmd, stdout, stderr, err := r.StartCmd(buildCmd)
 	if err != nil {
 		return err
@@ -33,8 +34,17 @@ func (r *Reload) build() error {
 		stdout.Close()
 		stderr.Close()
 	}()
-	_, _ = io.Copy(os.Stdout, stdout)
-	_, _ = io.Copy(os.Stderr, stderr)
+	buildLog, err := r.logger.BuildLog()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := utils.CloseFile(buildLog); err != nil {
+			r.logger.Main("%s", err)
+		}
+	}()
+	_, _ = io.Copy(buildLog, stdout)
+	_, _ = io.Copy(buildLog, stderr)
 
 	return cmd.Wait()
 }

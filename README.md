@@ -62,22 +62,20 @@ gomon [-c PATH_TO_YOUR_CONFIG]
 
 `Default` configuration:
 ```toml
+# The port used for the browser syncing server
+port = 3000
+[build]
 # What should the build be named?
 build_name = "main"
 # How should the build be done?
 build_command = "go build -o"
 # How should the build be run?
-execution_command = "./tmp/build/main"
-# What should the log be named?
-log_name = "gomon.log"
+execution_command = ""
 # What should we built from?
 relative_source_dir = ""
 # Where should the build be stored?
 relative_build_dir = "tmp/build"
-# Where should the log be stored?
-relative_log_dir = "tmp"
-# The port used for the browser syncing server
-port = 3000
+[filter]
 # Watch these extensions for changes
 include_exts = ["go", "tpl", "tmpl", "html", "css", "js", "env", "yaml"]
 # Watch these directories for changes
@@ -86,11 +84,43 @@ include_relative_dirs = []
 exclude_relative_files = []
 # Ignore these directories
 exclude_relative_dirs = ["assets", "tmp", "vendor", "node_modules", "build"]
+[log]
+# What should the Build log be named?
+build_log_name = "gomon.log"
+# Where should the Build log be stored?
+relative_build_log_dir = "tmp"
+# Should the Main log be enabled?
+main = true
+# Should the Detection log be enabled?
+detection = false
+# Should the Build log be enabled?
+build = true
+# Should the Run log be enabled?
+run = false
+# Should the Sync log be enabled?
+sync = false
+# Should the App log be enabled?
+app = true
+# Should a timestamp be appended to the log?
+time = true
+[color]
+# The Main log color
+main = "red"
+# The Detection log color
+detection = "magenta"
+# The Build log color
+build = "yellow"
+# The Run log color
+run = "green"
+# The Sync log color
+sync = "cyan"
+# The App log color
+app = "blue"
 ```
 
 # What features is it going to provide?
 
 The goals for version `1.0.0` are:
-- Linux/MacOS Support (currently windows only)
-- Colorful log messages
+-  ~~Linux/MacOS Support (currently windows only)~~
+-  ~~Colorful log messages~~
 - Customize binary execution with environmental flags

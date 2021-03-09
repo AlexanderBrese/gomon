@@ -26,19 +26,17 @@ func main() {
 
 	cfg, err := parse(cfgPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error: during configuration parsing: %s", err)
 	}
-	gomon, err := surveillance.NewGomon(cfg)
-	if err != nil {
-		log.Fatal(err)
+
+	gomon := surveillance.NewGomon(cfg)
+	if gomon == nil {
+		return
 	}
 
 	go func() {
 		<-sigs
-		if err := gomon.Stop(); err != nil {
-			// TODO: log
-			return
-		}
+		gomon.Stop()
 	}()
 
 	gomon.Start()
