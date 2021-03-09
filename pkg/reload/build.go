@@ -25,7 +25,7 @@ func (r *Reload) build() error {
 		return err
 	}
 	buildCmd := fmt.Sprintf("%s %s %s", r.config.BuildCommand, binary, srcDir)
-	cmd, stdout, stderr, err := r.startCmd(buildCmd)
+	cmd, stdout, stderr, err := r.StartCmd(buildCmd)
 	if err != nil {
 		return err
 	}

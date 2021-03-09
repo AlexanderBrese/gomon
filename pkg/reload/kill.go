@@ -21,7 +21,7 @@ func (r *Reload) kill(cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser)
 	}()
 
 	var err error
-	_, err = r.killCmd(cmd)
+	_, err = r.KillCmd(cmd)
 	if err != nil {
 		if cmd.ProcessState != nil && !cmd.ProcessState.Exited() {
 			os.Exit(1)

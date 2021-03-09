@@ -17,7 +17,7 @@ func (r *Reload) RunCleanup() {
 }
 
 func (r *Reload) run() error {
-	cmd, stdout, stderr, err := r.startCmd(r.config.ExecutionCommand)
+	cmd, stdout, stderr, err := r.StartCmd(r.config.ExecutionCommand)
 	if err != nil {
 		return err
 	}
