@@ -2,7 +2,6 @@ package utils
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,7 +39,6 @@ func RelPath(root string, path string) (string, error) {
 func CurrentRootPath() (string, error) {
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Printf("error: could not get root path: %s", err)
 		return "", err
 	}
 	return wd, nil

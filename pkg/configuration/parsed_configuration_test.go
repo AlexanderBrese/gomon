@@ -25,7 +25,9 @@ func TestWrongConfigName(t *testing.T) {
 
 func TestInvalidSourcePathProvided(t *testing.T) {
 	testCfg := &Configuration{
-		RelSrcDir: "wrong_source_dir",
+		Build: &BuildConfiguration{
+			RelSrcDir: "wrong_source_dir",
+		},
 	}
 	cfgData, err := toml.Marshal(testCfg)
 	if err != nil {
@@ -63,7 +65,9 @@ func TestInvalidSourcePathProvided(t *testing.T) {
 func TestConfigMerge(t *testing.T) {
 	port := 4000
 	testCfg := &Configuration{
-		Port: port,
+		Build: &BuildConfiguration{
+			Port: port,
+		},
 	}
 	testCfgData, err := toml.Marshal(testCfg)
 	if err != nil {
@@ -89,7 +93,7 @@ func TestConfigMerge(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if cfg.Port != port {
-		t.Errorf("want: %q, got: %q", port, cfg.Port)
+	if cfg.Build.Port != port {
+		t.Errorf("want: %q, got: %q", port, cfg.Build.Port)
 	}
 }

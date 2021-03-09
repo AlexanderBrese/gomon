@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/AlexanderBrese/gomon/pkg/configuration"
+	"github.com/AlexanderBrese/gomon/pkg/logging"
 	"github.com/AlexanderBrese/gomon/pkg/utils"
 )
 
@@ -21,12 +22,13 @@ const (
 
 func TestBuild(t *testing.T) {
 	cfg, err := configuration.TestConfiguration()
-	cfg.RelSrcDir = "cmd/web"
+	cfg.Build.RelSrcDir = "cmd/web"
 
 	if err != nil {
 		t.Error(err)
 	}
-	reloader := NewReload(cfg)
+	logger := logging.NewLogger(cfg)
+	reloader := NewReload(cfg, logger)
 
 	if err := buildPrepare(cfg); err != nil {
 		t.Error(err)
@@ -95,7 +97,7 @@ func buildPassed(cfg *configuration.Configuration) error {
 func buildCleanup(reloader *Reload) error {
 	reloader.BuildCleanup()
 	cfg := reloader.config
-	return cleanupBuild(cfg.RelSrcDir, cfg.RelBuildDir)
+	return cleanupBuild(cfg.Build.RelSrcDir, cfg.Build.RelDir)
 }
 
 func removeSourceDir(relSrcDir string) error {

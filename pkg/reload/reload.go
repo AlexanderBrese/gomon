@@ -4,12 +4,14 @@ import (
 	"sync"
 
 	"github.com/AlexanderBrese/gomon/pkg/configuration"
+	"github.com/AlexanderBrese/gomon/pkg/logging"
 )
 
 // Reload recompiles the build and restarts the binary
 type Reload struct {
 	config *configuration.Configuration
-	mu     sync.Mutex
+	logger *logging.Logger
+	mu     sync.RWMutex
 
 	running         bool
 	startBuilding   chan bool
@@ -20,9 +22,10 @@ type Reload struct {
 }
 
 // NewReload creates a new Reload with the config provided
-func NewReload(cfg *configuration.Configuration) *Reload {
+func NewReload(cfg *configuration.Configuration, l *logging.Logger) *Reload {
 	return &Reload{
 		config:          cfg,
+		logger:          l,
 		running:         false,
 		startBuilding:   make(chan bool, 1),
 		stop:            make(chan bool, 1),
@@ -43,7 +46,7 @@ func (r *Reload) Run() {
 	r.Cleanup()
 	go func() {
 		if err := r.start(); err != nil {
-			// TODO: log
+			r.logger.Main("error: during reload: %s", err)
 			return
 		}
 	}()
@@ -61,8 +64,10 @@ func (r *Reload) start() error {
 	default:
 	}
 	if err := r.build(); err != nil {
-		return err
+		r.logger.Main("error: during build: %s", err)
+		return nil
 	}
+	r.logger.Build("%s", "finished building")
 
 	select {
 	case <-r.stop:

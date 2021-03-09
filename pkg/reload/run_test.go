@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/AlexanderBrese/gomon/pkg/configuration"
+	"github.com/AlexanderBrese/gomon/pkg/logging"
 	"github.com/AlexanderBrese/gomon/pkg/utils"
 )
 
@@ -14,12 +15,13 @@ const checkRunningDelay = 300
 
 func TestRun(t *testing.T) {
 	cfg, err := configuration.TestConfiguration()
-	cfg.RelSrcDir = "cmd/web"
+	cfg.Build.RelSrcDir = "cmd/web"
 
 	if err != nil {
 		t.Error(err)
 	}
-	reloader := NewReload(cfg)
+	logger := logging.NewLogger(cfg)
+	reloader := NewReload(cfg, logger)
 
 	if err := buildPrepare(cfg); err != nil {
 		t.Error(err)

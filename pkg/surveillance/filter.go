@@ -37,7 +37,7 @@ func (f *Filter) IsExcludedDir(path string) (bool, error) {
 }
 
 func (f *Filter) IsIncludedDir(dir string) (bool, error) {
-	incDirs := f.config.IncludeDirs
+	incDirs := f.config.Filter.IncludeDirs
 	if len(incDirs) == 0 {
 		return true, nil
 	}
@@ -64,7 +64,7 @@ func (f *Filter) IsBuildDir(path string) (bool, error) {
 }
 
 func (f *Filter) IsLogDir(path string) (bool, error) {
-	logDir, err := f.config.LogDir()
+	logDir, err := f.config.BuildLogDir()
 	if err != nil {
 		return false, err
 	}
@@ -82,7 +82,7 @@ func (f *Filter) IsIgnoredDir(path string) (bool, error) {
 	}
 
 	rootParent := strings.Split(relPath, "/")[0]
-	for _, ignoredDir := range f.config.ExcludeDirs {
+	for _, ignoredDir := range f.config.Filter.ExcludeDirs {
 		if rootParent == ignoredDir {
 			return true, nil
 		}
@@ -100,7 +100,7 @@ func (f *Filter) IsExcludedFile(path string) (bool, error) {
 }
 
 func (f *Filter) IsIgnoredFile(path string) (bool, error) {
-	for _, f := range f.config.ExcludeFiles {
+	for _, f := range f.config.Filter.ExcludeFiles {
 		absIgnoredFile, err := utils.CurrentAbsolutePath(f)
 		if err != nil {
 			return false, err
@@ -116,7 +116,7 @@ func (f *Filter) IsIgnoredFile(path string) (bool, error) {
 func (f *Filter) IsIgnoredExt(path string) bool {
 	ext := filepath.Ext(path)
 
-	for _, e := range f.config.IncludeExts {
+	for _, e := range f.config.Filter.IncludeExts {
 		if ext == "."+strings.TrimSpace(e) {
 			return false
 		}

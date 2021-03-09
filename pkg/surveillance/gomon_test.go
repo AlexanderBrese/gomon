@@ -43,27 +43,27 @@ func testSuite() []Test {
 	defaultCfg.Reload = false
 	defaultCfg.Sync = false
 	customExtsCfg, _ := configuration.TestConfiguration()
-	customExtsCfg.IncludeExts = append(customExtsCfg.IncludeExts, "custom")
+	customExtsCfg.Filter.IncludeExts = append(customExtsCfg.Filter.IncludeExts, "custom")
 	customIgnoredDirCfg, _ := configuration.TestConfiguration()
-	customIgnoredDirCfg.ExcludeDirs = append(customIgnoredDirCfg.ExcludeDirs, "ignored")
-	customIgnoredDirCfg.IncludeExts = append(customIgnoredDirCfg.IncludeExts, "go")
+	customIgnoredDirCfg.Filter.ExcludeDirs = append(customIgnoredDirCfg.Filter.ExcludeDirs, "ignored")
+	customIgnoredDirCfg.Filter.IncludeExts = append(customIgnoredDirCfg.Filter.IncludeExts, "go")
 	customIgnoredFileCfg, _ := configuration.TestConfiguration()
-	customIgnoredFileCfg.ExcludeFiles = append(customIgnoredFileCfg.ExcludeFiles, "ignored.go")
-	customIgnoredFileCfg.IncludeExts = append(customIgnoredFileCfg.IncludeExts, "go")
+	customIgnoredFileCfg.Filter.ExcludeFiles = append(customIgnoredFileCfg.Filter.ExcludeFiles, "ignored.go")
+	customIgnoredFileCfg.Filter.IncludeExts = append(customIgnoredFileCfg.Filter.IncludeExts, "go")
 	customIncludeDirCfg, _ := configuration.TestConfiguration()
-	customIncludeDirCfg.IncludeDirs = append(customIncludeDirCfg.IncludeDirs, "watched")
-	customIncludeDirCfg.IncludeExts = append(customIncludeDirCfg.IncludeExts, "go")
+	customIncludeDirCfg.Filter.IncludeDirs = append(customIncludeDirCfg.Filter.IncludeDirs, "watched")
+	customIncludeDirCfg.Filter.IncludeExts = append(customIncludeDirCfg.Filter.IncludeExts, "go")
 	customIgnoredAndIncludedDirCfg, _ := configuration.TestConfiguration()
-	customIgnoredAndIncludedDirCfg.ExcludeDirs = append(customIgnoredAndIncludedDirCfg.ExcludeDirs, "watched")
-	customIgnoredAndIncludedDirCfg.IncludeDirs = append(customIgnoredAndIncludedDirCfg.IncludeDirs, "watched")
-	customIgnoredAndIncludedDirCfg.IncludeExts = append(customIgnoredAndIncludedDirCfg.IncludeExts, "go")
+	customIgnoredAndIncludedDirCfg.Filter.ExcludeDirs = append(customIgnoredAndIncludedDirCfg.Filter.ExcludeDirs, "watched")
+	customIgnoredAndIncludedDirCfg.Filter.IncludeDirs = append(customIgnoredAndIncludedDirCfg.Filter.IncludeDirs, "watched")
+	customIgnoredAndIncludedDirCfg.Filter.IncludeExts = append(customIgnoredAndIncludedDirCfg.Filter.IncludeExts, "go")
 	customIgnoredFileAndWatchedDirCfg, _ := configuration.TestConfiguration()
-	customIgnoredFileAndWatchedDirCfg.IncludeDirs = append(customIgnoredFileAndWatchedDirCfg.IncludeDirs, "watched")
-	customIgnoredFileAndWatchedDirCfg.ExcludeFiles = append(customIgnoredFileAndWatchedDirCfg.ExcludeFiles, "watched/ignored.go")
-	customIgnoredFileAndWatchedDirCfg.IncludeExts = append(customIgnoredFileAndWatchedDirCfg.IncludeExts, "go")
+	customIgnoredFileAndWatchedDirCfg.Filter.IncludeDirs = append(customIgnoredFileAndWatchedDirCfg.Filter.IncludeDirs, "watched")
+	customIgnoredFileAndWatchedDirCfg.Filter.ExcludeFiles = append(customIgnoredFileAndWatchedDirCfg.Filter.ExcludeFiles, "watched/ignored.go")
+	customIgnoredFileAndWatchedDirCfg.Filter.IncludeExts = append(customIgnoredFileAndWatchedDirCfg.Filter.IncludeExts, "go")
 	customWatchedDirAndWatchedExt, _ := configuration.TestConfiguration()
-	customWatchedDirAndWatchedExt.IncludeDirs = append(customWatchedDirAndWatchedExt.IncludeDirs, "watched")
-	customWatchedDirAndWatchedExt.IncludeExts = append(customWatchedDirAndWatchedExt.IncludeExts, "go")
+	customWatchedDirAndWatchedExt.Filter.IncludeDirs = append(customWatchedDirAndWatchedExt.Filter.IncludeDirs, "watched")
+	customWatchedDirAndWatchedExt.Filter.IncludeExts = append(customWatchedDirAndWatchedExt.Filter.IncludeExts, "go")
 
 	return []Test{
 		{"Files in an ignored folder should not be detected.", customIgnoredDirCfg, "ignored/test.go", false},
@@ -82,16 +82,16 @@ func testSuite() []Test {
 }
 
 func detect(cfg *configuration.Configuration, relFile string, shouldBeDetected bool) error {
-	changeDetection, err := NewGomon(cfg)
-	if err != nil {
-		return err
+	gomon := NewGomon(cfg)
+	if gomon == nil {
+		return errors.New("error: during gomon initialization")
 	}
-	subscription := subscribe(changeDetection)
-	go changeDetection.Start()
+	subscription := subscribe(gomon)
+	go gomon.Start()
 
 	file := filepath.Join(cfg.Root, relFile)
 	defer func() {
-		if err := cleanup(file, relFile, subscription, changeDetection); err != nil {
+		if err := cleanup(file, relFile, subscription, gomon); err != nil {
 			// TODO: log
 			return
 		}
@@ -108,9 +108,7 @@ func detect(cfg *configuration.Configuration, relFile string, shouldBeDetected b
 }
 
 func cleanup(file string, relFile string, sub chan bool, g *Gomon) error {
-	if err := g.Stop(); err != nil {
-		return err
-	}
+	g.Stop()
 	close(sub)
 	if isInsideDir(relFile) {
 		dir, err := dir(relFile)

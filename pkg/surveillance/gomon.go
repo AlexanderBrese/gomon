@@ -8,17 +8,18 @@ type Gomon struct {
 	detection   *Detection
 }
 
-func NewGomon(cfg *configuration.Configuration) (*Gomon, error) {
+func NewGomon(cfg *configuration.Configuration) *Gomon {
 	env, err := NewEnvironment(cfg)
 	if err != nil {
-		return nil, err
+		env.logger.Main("error: during environment initialization: %s", err)
+		return nil
 	}
 
 	n := NewNotification()
 	ctrl := NewRefresh(env, n)
 	d, err := NewDetection(env, n)
 	if err != nil {
-		return nil, err
+		env.logger.Main("error: during detection initialization: %s", err)
 	}
 
 	c := &Gomon{
@@ -27,7 +28,7 @@ func NewGomon(cfg *configuration.Configuration) (*Gomon, error) {
 		detection:   d,
 	}
 
-	return c, nil
+	return c
 }
 
 func (c *Gomon) Subscribe(sub chan bool) {
@@ -37,16 +38,16 @@ func (c *Gomon) Subscribe(sub chan bool) {
 func (c *Gomon) Start() {
 	go func() {
 		if err := c.detection.Run(); err != nil {
-			// TODO: log
+			c.environment.logger.Main("error: during detection: %s", err)
 			return
 		}
 	}()
 	c.control.Run()
 }
 
-func (c *Gomon) Stop() error {
+func (c *Gomon) Stop() {
 	if err := c.environment.Teardown(); err != nil {
-		return err
+		c.environment.logger.Main("error: during environment teardown: %s", err)
+		return
 	}
-	return nil
 }

@@ -13,11 +13,12 @@ func (r *Reload) kill(cmd *exec.Cmd, stdout io.ReadCloser, stderr io.ReadCloser)
 	defer func() {
 		stdout.Close()
 		stderr.Close()
-		r.FinishedKilling <- true
 		if err := r.removeBinary(); err != nil {
-			// TODO: log
+			r.logger.Main("error: during kill: %s", err)
 			return
 		}
+		r.FinishedKilling <- true
+		r.logger.Run("%s", "stopped running")
 	}()
 
 	var err error
