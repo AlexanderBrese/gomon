@@ -20,12 +20,17 @@ jobs:
 
     - name: Build
       run: go build -v .
-
-    - name: Lint
-      uses: golangci/golangci-lint-action@v2
+    
+    - name: go-mnd
+      uses: tommy-muehle/go-mnd@v2.2.0
       with:
-        # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-        version: v1.29
+        # Arguments for go-mnd
+        args: -h
+    
+    - name: Lint
+      uses: golangci/golangci-lint-action@v2.5.1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run Unit tests.
       run: go test  ./... -v -covermode=count -coverprofile=coverage.txt
@@ -35,3 +40,28 @@ jobs:
       with:
         token: 053457c9-5e88-436a-b564-757dc3bf7350
         file: ./coverage.txt
+        
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
