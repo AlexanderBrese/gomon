@@ -38,7 +38,11 @@ func (r *Reload) build() error {
 	if err != nil {
 		return err
 	}
-	defer utils.CloseFile(buildLog)
+	defer func() {
+		if err := utils.CloseFile(buildLog); err != nil {
+			r.logger.Main("%s", err)
+		}
+	}()
 	_, _ = io.Copy(buildLog, stdout)
 	_, _ = io.Copy(buildLog, stderr)
 

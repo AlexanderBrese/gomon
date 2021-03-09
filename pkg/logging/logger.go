@@ -121,7 +121,10 @@ func (l *Logger) appFunc() logFunc {
 func (l *Logger) log(level string, format string, v ...interface{}) {
 	utils.WithLockAndLog(&l.ll, func() {
 		logFunc := l.getLogFunc(level)
-		logFunc(format, v...)
+		_, err := logFunc(format, v...)
+		if err != nil {
+			fmt.Printf("%s", err)
+		}
 	})
 }
 
