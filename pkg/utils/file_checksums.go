@@ -40,11 +40,6 @@ func FileChecksum(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	/*
-		if len(contents) == 0 {
-			return "", fmt.Errorf("error: empty file, could not update checksum for %s", path)
-		}
-	*/
 
 	h := sha256.New()
 	if _, err := h.Write(contents); err != nil {
