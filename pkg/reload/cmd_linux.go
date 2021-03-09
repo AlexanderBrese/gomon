@@ -23,7 +23,7 @@ func (r *Reload) KillCmd(cmd *exec.Cmd) (pid int, err error) {
 	if err = syscall.Kill(-pid, syscall.SIGINT); err != nil {
 		return
 	}
-	time.Sleep(r.config.KillDelay * time.Millisecond)
+	time.Sleep(time.Duration(r.config.KillDelay) * time.Millisecond)
 
 	// https://stackoverflow.com/questions/22470193/why-wont-go-kill-a-child-process-correctly
 	err = syscall.Kill(-pid, syscall.SIGKILL)
