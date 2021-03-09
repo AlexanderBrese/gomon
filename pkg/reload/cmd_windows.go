@@ -22,6 +22,7 @@ func (r *Reload) StartCmd(cmd string) (*exec.Cmd, io.ReadCloser, io.ReadCloser, 
 	if err != nil {
 		return nil, nil, nil, err
 	}
+
 	return c, stdout, stderr, err
 }
 

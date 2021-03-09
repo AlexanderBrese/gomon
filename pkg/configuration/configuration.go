@@ -29,6 +29,7 @@ type Configuration struct {
 	IncludeDirs      []string `toml:"include_relative_dirs"`
 	ExcludeFiles     []string `toml:"exclude_relative_files"`
 	EventBufferTime  int
+	KillDelay        int
 	Port             int `toml:"port"`
 	Root             string
 	ExecutionCommand string `toml:"execution_command"`
@@ -50,6 +51,7 @@ func DefaultConfiguration() *Configuration {
 		IncludeDirs:      []string{},
 		ExcludeFiles:     []string{},
 		EventBufferTime:  100,
+		KillDelay:        100,
 		ExecutionCommand: "",
 		Port:             3000,
 		Root:             root,
