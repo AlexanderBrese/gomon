@@ -8,9 +8,9 @@ Because it also refreshes the `browser` upon change.
 
 # How does it work?
 
-Plain: Watches for code changes, reloads the specified binary e.g. a webserver and calls the client through a websocket to reload.<br><br>
-# Usage
+Plain: Watches for code changes, reloads the specified binary e.g. a webserver and calls the client through a websocket to reload.
 
+# Usage
 ## setup the client
 
 Include the script below to your client e.g. a static main.js & change `YOUR_PORT` with a free port of your choice. The default port is `3000`.<br>
