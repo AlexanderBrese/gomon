@@ -16,10 +16,11 @@ func (r *Reload) RunCleanup() {
 	})
 }
 
-func (r *Reload) run() error {
+func (r *Reload) run() {
 	cmd, stdout, stderr, err := r.StartCmd(r.config.Build.ExecutionCommand)
 	if err != nil {
-		return err
+		r.logger.Run("error: during run: %s", err)
+		return
 	}
 
 	r.FinishedRunning <- true
@@ -35,9 +36,8 @@ func (r *Reload) run() error {
 
 	go func() {
 		if err := r.kill(cmd, stdout, stderr); err != nil {
-			r.logger.Main("error: during kill: %s", err)
+			r.logger.Run("error: during kill: %s", err)
 			return
 		}
 	}()
-	return nil
 }

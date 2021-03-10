@@ -49,7 +49,8 @@ func runStart(reloader *Reload) error {
 	if err := reloader.build(); err != nil {
 		return err
 	}
-	return reloader.run()
+	reloader.run()
+	return nil
 }
 
 func runPassed(reloader *Reload) error {

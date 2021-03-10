@@ -27,8 +27,9 @@ func (c *Refresh) Run() {
 			break
 		}
 
-		c.reload()
-		c.sync()
+		if c.reload() {
+			c.sync()
+		}
 	}
 }
 
@@ -36,11 +37,12 @@ func (c *Refresh) log() {
 	c.environment.logger.Detection("%s", "change detected")
 }
 
-func (c *Refresh) reload() {
+func (c *Refresh) reload() bool {
 	if c.environment.config.Reload {
 		c.environment.reloader.Run()
-		<-c.environment.reloader.FinishedRunning
+		return <-c.environment.reloader.FinishedRunning
 	}
+	return false
 }
 
 func (c *Refresh) sync() {

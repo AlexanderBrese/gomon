@@ -44,15 +44,10 @@ func (r *Reload) Cleanup() {
 // Run cleans up and starts the new build
 func (r *Reload) Run() {
 	r.Cleanup()
-	go func() {
-		if err := r.start(); err != nil {
-			r.logger.Main("error: during reload: %s", err)
-			return
-		}
-	}()
+	go r.start()
 }
 
-func (r *Reload) start() error {
+func (r *Reload) start() {
 	r.startBuilding <- true
 	defer func() {
 		<-r.startBuilding
@@ -60,20 +55,21 @@ func (r *Reload) start() error {
 
 	select {
 	case <-r.stop:
-		return nil
+		return
 	default:
 	}
 	if err := r.build(); err != nil {
 		r.logger.Main("error: during build: %s", err)
-		return nil
+		r.FinishedRunning <- false
+		return
 	}
 	r.logger.Build("%s", "finished building")
 
 	select {
 	case <-r.stop:
-		return nil
+		return
 	default:
 	}
 
-	return r.run()
+	r.run()
 }
